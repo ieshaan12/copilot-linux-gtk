@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Placeholder app icon for Copilot for GNOME -->
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#62a0ea"/>
+      <stop offset="100%" stop-color="#1a5fb4"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded square background -->
+  <rect x="4" y="4" width="120" height="120" rx="24" ry="24"
+        fill="url(#bg)" stroke="#164a87" stroke-width="2"/>
+  <!-- Chat bubble icon -->
+  <path d="M 34 40 h 60 a 8 8 0 0 1 8 8 v 28 a 8 8 0 0 1 -8 8 h -36 l -16 12 v -12 h -8 a 8 8 0 0 1 -8 -8 v -28 a 8 8 0 0 1 8 -8 z"
+        fill="white" fill-opacity="0.95"/>
+  <!-- Three dots (typing indicator) -->
+  <circle cx="50" cy="62" r="5" fill="#1a5fb4"/>
+  <circle cx="64" cy="62" r="5" fill="#1a5fb4"/>
+  <circle cx="78" cy="62" r="5" fill="#1a5fb4"/>
+</svg>

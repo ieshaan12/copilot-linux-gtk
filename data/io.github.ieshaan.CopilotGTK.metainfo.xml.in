@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.ieshaan.CopilotGTK</id>
+
+  <name>Copilot for GNOME</name>
+  <summary>AI assistant powered by GitHub Copilot</summary>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <developer id="io.github.ieshaan">
+    <name>Ieshaan</name>
+  </developer>
+
+  <description>
+    <p>
+      Copilot for GNOME is a native Linux desktop application that provides
+      a conversational AI interface powered by the GitHub Copilot SDK. It
+      integrates seamlessly with the GNOME desktop environment using GTK4
+      and Libadwaita.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Streaming AI responses in real-time</li>
+      <li>Multiple concurrent conversations</li>
+      <li>Markdown rendering with syntax-highlighted code blocks</li>
+      <li>Dark and light mode support</li>
+      <li>GNOME Human Interface Guidelines compliant</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">io.github.ieshaan.CopilotGTK.desktop</launchable>
+
+  <url type="homepage">https://github.com/ieshaan/copilot-linux-gtk</url>
+  <url type="bugtracker">https://github.com/ieshaan/copilot-linux-gtk/issues</url>
+
+  <content_rating type="oars-1.1" />
+
+  <branding>
+    <color type="primary" scheme_preference="light">#99c1f1</color>
+    <color type="primary" scheme_preference="dark">#1a5fb4</color>
+  </branding>
+
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
+
+  <recommends>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </recommends>
+
+  <releases>
+    <release version="0.1.0" date="2026-03-01">
+      <description>
+        <p>Initial release — Technical Preview</p>
+      </description>
+    </release>
+  </releases>
+</component>

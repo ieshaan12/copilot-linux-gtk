@@ -1,0 +1,32 @@
+# Build
+build/
+builddir/
+_build/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+*.egg
+
+# Virtual environment
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Flatpak
+.flatpak-builder/
+repo/
+
+# GSettings compiled schema
+data/gschemas.compiled
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Symbolic icon for Copilot for GNOME -->
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <path d="M 2 3 h 12 a 2 2 0 0 1 2 2 v 6 a 2 2 0 0 1 -2 2 h -6 l -4 3 v -3 h -2 a 2 2 0 0 1 -2 -2 v -6 a 2 2 0 0 1 2 -2 z"
+        fill="currentColor"/>
+</svg>

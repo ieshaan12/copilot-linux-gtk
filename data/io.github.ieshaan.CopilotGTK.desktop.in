@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Copilot for GNOME
+Comment=AI assistant powered by GitHub Copilot
+Exec=copilot-gtk
+Icon=io.github.ieshaan.CopilotGTK
+Terminal=false
+Type=Application
+Categories=Development;Utility;
+Keywords=copilot;ai;chat;assistant;github;
+StartupNotify=true

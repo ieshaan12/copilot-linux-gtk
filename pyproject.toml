@@ -1,0 +1,75 @@
+[project]
+name = "copilot-gtk"
+version = "0.1.0"
+description = "A GNOME-native Linux desktop app for interacting with GitHub Copilot"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+requires-python = ">=3.11"
+authors = [
+    { name = "ieshaan" },
+]
+keywords = ["gnome", "gtk", "copilot", "ai", "chat"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: X11 Applications :: GTK",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: User Interfaces",
+]
+dependencies = [
+    "PyGObject>=3.50.0",
+    "pycairo>=1.25.0",
+    "github-copilot-sdk>=0.1.0",
+    "gbulb>=0.6.5",
+    "mistune>=3.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ieshaan/copilot-linux-gtk"
+Repository = "https://github.com/ieshaan/copilot-linux-gtk"
+Issues = "https://github.com/ieshaan/copilot-linux-gtk/issues"
+
+[project.scripts]
+copilot-gtk = "copilot_gtk.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/copilot_gtk"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-timeout>=2.3",
+    "mypy>=1.10",
+    "ruff>=0.8",
+    "PyGObject-stubs>=2.10",
+    "dogtail>=1.0",
+    "Pillow>=10.0",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+timeout = 30
