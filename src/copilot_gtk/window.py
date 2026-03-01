@@ -23,6 +23,7 @@ from .backend.message import Message, MessageRole  # noqa: E402
 from .widgets.chat_input import ChatInput  # noqa: E402
 from .widgets.chat_view import ChatView  # noqa: E402
 from .widgets.conversation_list import ConversationList  # noqa: E402
+from .widgets.shortcuts_window import build_shortcuts_window  # noqa: E402
 
 log = logging.getLogger(__name__)
 
@@ -53,6 +54,11 @@ class CopilotWindow(Adw.ApplicationWindow):
 
         self.set_default_size(1000, 700)
         self.set_title("Copilot for GNOME")
+
+        # Keyboard-shortcuts help overlay (F1 / menu item)
+        self._shortcuts_window = build_shortcuts_window()
+        self._shortcuts_window.set_transient_for(self)
+        self._shortcuts_window.set_modal(True)
 
         # --- Toast overlay (wraps everything for transient notifications) ---
         self._toast_overlay = Adw.ToastOverlay()
@@ -95,12 +101,18 @@ class CopilotWindow(Adw.ApplicationWindow):
         new_chat_btn.set_tooltip_text("New Chat (Ctrl+N)")
         new_chat_btn.add_css_class("flat")
         new_chat_btn.set_action_name("win.new-chat")
+        new_chat_btn.update_property(
+            [Gtk.AccessibleProperty.LABEL], ["New Chat"],
+        )
         sidebar_header.pack_start(new_chat_btn)
 
         # Search toggle button
         self._search_button = Gtk.ToggleButton(icon_name="system-search-symbolic")
         self._search_button.set_tooltip_text("Search Conversations (Ctrl+K)")
         self._search_button.add_css_class("flat")
+        self._search_button.update_property(
+            [Gtk.AccessibleProperty.LABEL], ["Search Conversations"],
+        )
         sidebar_header.pack_end(self._search_button)
 
         sidebar_toolbar.add_top_bar(sidebar_header)
@@ -155,6 +167,9 @@ class CopilotWindow(Adw.ApplicationWindow):
         menu_btn.set_tooltip_text("Main Menu")
         menu_btn.add_css_class("flat")
         menu_btn.set_menu_model(self._build_menu_model())
+        menu_btn.update_property(
+            [Gtk.AccessibleProperty.LABEL], ["Main Menu"],
+        )
         content_header.pack_end(menu_btn)
 
         content_toolbar.add_top_bar(content_header)
@@ -181,6 +196,25 @@ class CopilotWindow(Adw.ApplicationWindow):
 
         self._content_stack.add_named(empty_page, "empty")
 
+        # Startup loading state (TASK-055)
+        loading_page = Adw.StatusPage()
+        loading_page.set_title("Starting Copilot…")
+        loading_page.set_description("Initializing the Copilot SDK")
+        loading_spinner = Adw.Spinner()
+        loading_spinner.set_halign(Gtk.Align.CENTER)
+        loading_spinner.set_size_request(32, 32)
+        loading_page.set_child(loading_spinner)
+        self._content_stack.add_named(loading_page, "loading")
+
+        # Fatal error state (TASK-056)
+        self._error_page = Adw.StatusPage()
+        self._error_page.set_icon_name("dialog-error-symbolic")
+        self._error_page.set_title("Copilot CLI Not Found")
+        self._error_page.set_description(
+            "Install GitHub Copilot CLI or set the CLI path in Preferences."
+        )
+        self._content_stack.add_named(self._error_page, "error")
+
         # Chat area (chat_view + input)
         chat_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 
@@ -194,8 +228,8 @@ class CopilotWindow(Adw.ApplicationWindow):
 
         self._content_stack.add_named(chat_box, "chat")
 
-        # Start with empty state
-        self._content_stack.set_visible_child_name("empty")
+        # Start with loading state (replaced by empty/chat when SDK is ready)
+        self._content_stack.set_visible_child_name("loading")
 
         self._split_view.set_content(self._content_page)
 
@@ -226,6 +260,18 @@ class CopilotWindow(Adw.ApplicationWindow):
         search_action.connect("activate", self._on_search_action)
         self.add_action(search_action)
 
+        close_action = Gio.SimpleAction(name="close-conversation")
+        close_action.connect("activate", self._on_close_conversation_action)
+        self.add_action(close_action)
+
+        escape_action = Gio.SimpleAction(name="escape-pressed")
+        escape_action.connect("activate", self._on_escape_action)
+        self.add_action(escape_action)
+
+        help_action = Gio.SimpleAction(name="show-help-overlay")
+        help_action.connect("activate", self._on_show_help_overlay)
+        self.add_action(help_action)
+
     # ------------------------------------------------------------------
     # Service signal handlers
     # ------------------------------------------------------------------
@@ -249,6 +295,9 @@ class CopilotWindow(Adw.ApplicationWindow):
     ) -> None:
         """Enable the New Chat button as soon as the SDK is ready."""
         self._new_chat_action.set_enabled(True)
+        # Hide startup loading state if visible
+        if self._content_stack.get_visible_child_name() == "loading":
+            self._content_stack.set_visible_child_name("empty")
 
     def _on_response_chunk(
         self, _service: CopilotService, session_id: str, delta: str
@@ -330,8 +379,13 @@ class CopilotWindow(Adw.ApplicationWindow):
     def _on_service_error(
         self, _service: CopilotService, message: str
     ) -> None:
-        toast = Adw.Toast(title=message, timeout=5)
-        self._toast_overlay.add_toast(toast)
+        # Fatal errors: show a full-pane StatusPage
+        fatal_keywords = ("not found", "cli not found", "no such file", "enoent")
+        if any(kw in message.lower() for kw in fatal_keywords):
+            self._show_fatal_error(message)
+        else:
+            toast = Adw.Toast(title=message, timeout=5)
+            self._toast_overlay.add_toast(toast)
         self._chat_input.set_loading(False)
         log.error("Service error: %s", message)
 
@@ -535,6 +589,41 @@ class CopilotWindow(Adw.ApplicationWindow):
         """Filter the conversation list as the user types."""
         query = entry.get_text()
         self._conversation_list.filter_by_title(query)
+
+    def _on_close_conversation_action(
+        self, _action: Gio.SimpleAction, _param: GLib.Variant | None
+    ) -> None:
+        """Close the current conversation (Ctrl+W) — return to empty state."""
+        if self._current_session_id is None:
+            return
+        self._current_session_id = None
+        self._chat_view.clear()
+        self._content_stack.set_visible_child_name("empty")
+        self._content_page.set_title("Chat")
+        self._conversation_list.deselect_all()
+
+    def _on_escape_action(
+        self, _action: Gio.SimpleAction, _param: GLib.Variant | None
+    ) -> None:
+        """Handle Escape: close search bar, or stop generation if streaming."""
+        if self._search_button.get_active():
+            self._search_button.set_active(False)
+            return
+        if self._chat_input._is_loading and self._current_session_id:
+            self._service.abort_session(self._current_session_id)
+            self._chat_input.set_loading(False)
+
+    def _show_fatal_error(self, message: str) -> None:
+        """Show a fatal error StatusPage in the content area."""
+        self._error_page.set_description(message)
+        self._content_stack.set_visible_child_name("error")
+        self._new_chat_action.set_enabled(False)
+
+    def _on_show_help_overlay(
+        self, _action: Gio.SimpleAction, _param: GLib.Variant | None
+    ) -> None:
+        """Present the keyboard shortcuts window (F1)."""
+        self._shortcuts_window.present()
 
     def _select_conversation(self, session_id: str) -> None:
         """Switch the chat view to the given conversation."""

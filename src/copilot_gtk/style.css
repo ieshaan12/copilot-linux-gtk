@@ -105,3 +105,13 @@
 .chat-scroll {
     background-color: @window_bg_color;
 }
+
+/* ------------------------------------------------------------------ */
+/* Focus ring on chat input frame                                      */
+/* ------------------------------------------------------------------ */
+
+.chat-input-frame:focus-within {
+    border-color: @accent_bg_color;
+    outline: 2px solid alpha(@accent_bg_color, 0.3);
+    outline-offset: -1px;
+}
