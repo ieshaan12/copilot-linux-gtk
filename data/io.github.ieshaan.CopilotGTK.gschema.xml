@@ -50,5 +50,23 @@
       <description>Application log level (debug, info, warning, error).</description>
     </key>
 
+    <key name="byok-enabled" type="b">
+      <default>false</default>
+      <summary>BYOK enabled</summary>
+      <description>Whether to use a custom OpenAI-compatible API endpoint instead of GitHub Copilot.</description>
+    </key>
+
+    <key name="byok-base-url" type="s">
+      <default>''</default>
+      <summary>BYOK base URL</summary>
+      <description>Base URL for the custom API endpoint (e.g. http://localhost:11434/v1).</description>
+    </key>
+
+    <key name="byok-model" type="s">
+      <default>''</default>
+      <summary>BYOK model name</summary>
+      <description>Model name to use with the custom provider.</description>
+    </key>
+
   </schema>
 </schemalist>

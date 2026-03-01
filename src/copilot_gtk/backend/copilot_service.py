@@ -147,15 +147,27 @@ class CopilotService(GObject.Object):
     # Lifecycle
     # ------------------------------------------------------------------
 
-    def start(self) -> None:
+    def start(self, client_options: dict | None = None) -> None:
         """Start the Copilot SDK client (async, non-blocking).
+
+        Args:
+            client_options: Optional dict of ``CopilotClientOptions``
+                fields (e.g. ``github_token``, ``cli_path``).
 
         Emits ``ready`` on success, ``error`` on failure.
         """
-        run_async(self._start_async(), error_callback=self._on_error)
+        run_async(
+            self._start_async(client_options),
+            error_callback=self._on_error,
+        )
 
-    async def _start_async(self) -> None:
-        client = self._client or CopilotClient()
+    async def _start_async(self, client_options: dict | None = None) -> None:
+        if self._client is not None:
+            client = self._client
+        elif client_options:
+            client = CopilotClient(client_options)
+        else:
+            client = CopilotClient()
 
         try:
             await client.start()

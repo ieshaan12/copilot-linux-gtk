@@ -13,7 +13,10 @@ gi.require_version('Adw', '1')
 from gi.repository import Adw, Gdk, Gio, Gtk  # noqa: E402
 
 from .backend import CopilotService, install_async_bridge  # noqa: E402
+from .backend.auth_manager import AuthManager  # noqa: E402
 from .window import CopilotWindow  # noqa: E402
+from .widgets.auth_dialog import AuthDialog  # noqa: E402
+from .widgets.preferences_dialog import PreferencesDialog  # noqa: E402
 
 log = logging.getLogger(__name__)
 
@@ -26,15 +29,32 @@ class CopilotGTKApplication(Adw.Application):
             application_id='io.github.ieshaan.CopilotGTK',
             flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
         )
+        self._auth_manager = AuthManager()
         self._service = CopilotService()
         self._window: CopilotWindow | None = None
+        self._settings: Gio.Settings | None = None
 
     def do_startup(self) -> None:
-        """Called once on app startup — load CSS, set up actions."""
+        """Called once on app startup — load CSS, GSettings, set up actions."""
         Adw.Application.do_startup(self)
 
         # Load custom stylesheet
         self._load_css()
+
+        # GSettings — use the schema from the data/ directory
+        schema_dir = Path(__file__).parent.parent.parent / "data"
+        schema_source = Gio.SettingsSchemaSource.new_from_directory(
+            str(schema_dir),
+            Gio.SettingsSchemaSource.get_default(),
+            False,
+        )
+        schema = schema_source.lookup(
+            "io.github.ieshaan.CopilotGTK", False
+        )
+        self._settings = Gio.Settings.new_full(schema, None, None)
+
+        # Detect auth method
+        self._auth_manager.detect()
 
         # Application-level actions
         self._setup_actions()
@@ -45,6 +65,8 @@ class CopilotGTKApplication(Adw.Application):
         if not win:
             win = CopilotWindow(
                 service=self._service,
+                auth_manager=self._auth_manager,
+                settings=self._settings,
                 application=self,
             )
             self._window = win
@@ -52,7 +74,16 @@ class CopilotGTKApplication(Adw.Application):
             # Start the Copilot SDK backend
             self._service.connect("ready", self._on_service_ready)
             self._service.connect("error", self._on_service_error)
-            self._service.start()
+
+            # Pass auth options to the service
+            auth_opts = self._auth_manager.get_client_options()
+
+            # Also pass CLI path from settings if set
+            cli_path = self._settings.get_string("cli-path") if self._settings else ""
+            if cli_path:
+                auth_opts["cli_path"] = cli_path
+
+            self._service.start(client_options=auth_opts)
 
         win.present()
 
@@ -112,9 +143,13 @@ class CopilotGTKApplication(Adw.Application):
         about.present(self._window)
 
     def _on_preferences(self, _action, _param) -> None:
-        # Placeholder — will be implemented in Phase 5
-        if self._window:
-            self._window.show_toast("Preferences coming soon")
+        if self._window and self._settings:
+            dialog = PreferencesDialog(
+                settings=self._settings,
+                auth_manager=self._auth_manager,
+                service=self._service,
+            )
+            dialog.present(self._window)
 
     def _on_quit(self, _action, _param) -> None:
         self._service.stop()

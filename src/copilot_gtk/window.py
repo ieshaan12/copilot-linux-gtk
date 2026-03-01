@@ -15,6 +15,7 @@ from gi.repository import Adw, Gio, GLib, GObject, Gtk  # noqa: E402
 
 if TYPE_CHECKING:
     from .backend import CopilotService
+    from .backend.auth_manager import AuthManager
 
 from .widgets.chat_input import ChatInput  # noqa: E402
 from .widgets.chat_view import ChatView  # noqa: E402
@@ -35,10 +36,14 @@ class CopilotWindow(Adw.ApplicationWindow):
     def __init__(
         self,
         service: CopilotService,
+        auth_manager: AuthManager | None = None,
+        settings: Gio.Settings | None = None,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
         self._service = service
+        self._auth_manager = auth_manager
+        self._settings = settings
         self._current_session_id: str | None = None
 
         self.set_default_size(1000, 700)
