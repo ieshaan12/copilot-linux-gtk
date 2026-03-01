@@ -177,9 +177,10 @@ class CopilotWindow(Adw.ApplicationWindow):
 
     def _setup_actions(self) -> None:
         """Register window-level GActions."""
-        new_chat_action = Gio.SimpleAction(name="new-chat")
-        new_chat_action.connect("activate", self._on_new_chat_action)
-        self.add_action(new_chat_action)
+        self._new_chat_action = Gio.SimpleAction(name="new-chat")
+        self._new_chat_action.connect("activate", self._on_new_chat_action)
+        self._new_chat_action.set_enabled(False)  # disabled until SDK ready
+        self.add_action(self._new_chat_action)
 
     # ------------------------------------------------------------------
     # Service signal handlers
@@ -187,6 +188,7 @@ class CopilotWindow(Adw.ApplicationWindow):
 
     def _connect_service_signals(self) -> None:
         """Connect to CopilotService GObject signals."""
+        self._service.connect("ready", self._on_service_ready)
         self._service.connect("response-chunk", self._on_response_chunk)
         self._service.connect("response-complete", self._on_response_complete)
         self._service.connect("session-idle", self._on_session_idle)
@@ -197,6 +199,12 @@ class CopilotWindow(Adw.ApplicationWindow):
         self._service.connect("turn-end", self._on_turn_end)
         self._service.connect("error", self._on_service_error)
         self._service.connect("models-loaded", self._on_models_loaded)
+
+    def _on_service_ready(
+        self, _service: CopilotService,
+    ) -> None:
+        """Enable the New Chat button as soon as the SDK is ready."""
+        self._new_chat_action.set_enabled(True)
 
     def _on_response_chunk(
         self, _service: CopilotService, session_id: str, delta: str
@@ -255,7 +263,8 @@ class CopilotWindow(Adw.ApplicationWindow):
         self, _service: CopilotService, models: object
     ) -> None:
         """Store loaded models for the new-chat dialog."""
-        pass  # models are cached on the service; dialog reads from there
+        # Enable New Chat now that we have models
+        self._new_chat_action.set_enabled(True)
 
     # ------------------------------------------------------------------
     # User interactions

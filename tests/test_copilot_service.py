@@ -45,6 +45,7 @@ class FakeEventType:
     """Mimics ``SessionEventType`` enum values we care about."""
 
     ASSISTANT_MESSAGE_DELTA = "assistant.message_delta"
+    ASSISTANT_STREAMING_DELTA = "assistant.streaming_delta"
     ASSISTANT_MESSAGE = "assistant.message"
     SESSION_IDLE = "session.idle"
     SESSION_TITLE_CHANGED = "session.title_changed"
@@ -275,6 +276,43 @@ class TestCopilotServiceEventBridge:
         streaming = conv.get_streaming_message()
         assert streaming is not None
         assert "Hello" in streaming.content
+
+    def test_streaming_delta_emits_response_chunk(self) -> None:
+        """ASSISTANT_STREAMING_DELTA events should also emit response-chunk."""
+        from copilot.generated.session_events import SessionEventType
+
+        fake_session = FakeSession("sess-1")
+        mock_client = _make_mock_client(session=fake_session)
+        service = CopilotService(client=mock_client)
+
+        asyncio.run(service._start_async())
+        asyncio.run(service._create_conversation_async("gpt-4"))
+        asyncio.run(service._send_message_async("sess-1", "Hi"))
+
+        chunks: list[tuple[str, str]] = []
+        service.connect(
+            "response-chunk",
+            lambda _, sid, delta: chunks.append((sid, delta)),
+        )
+
+        # Simulate SDK streaming event
+        fake_session.fire_event(
+            FakeSessionEvent(
+                type=SessionEventType.ASSISTANT_STREAMING_DELTA,
+                data=FakeData(delta_content="World"),
+            )
+        )
+
+        # Drain idle queue
+        while GLib.MainContext.default().pending():
+            GLib.MainContext.default().iteration(False)
+
+        assert ("sess-1", "World") in chunks
+
+        conv = service._conversations["sess-1"]
+        streaming = conv.get_streaming_message()
+        assert streaming is not None
+        assert "World" in streaming.content
 
     def test_session_idle_emits_signal(self) -> None:
         from copilot.generated.session_events import SessionEventType

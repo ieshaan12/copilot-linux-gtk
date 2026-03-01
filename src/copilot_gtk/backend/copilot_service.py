@@ -124,6 +124,7 @@ class CopilotService(GObject.Object):
         """
         super().__init__()
         self._client: CopilotClient | None = client
+        self._started: bool = False
         self._sessions: dict[str, CopilotSession] = {}
         self._conversations: dict[str, Conversation] = {}
         self._models: list[ModelInfo] = []
@@ -154,10 +155,18 @@ class CopilotService(GObject.Object):
         run_async(self._start_async(), error_callback=self._on_error)
 
     async def _start_async(self) -> None:
-        if self._client is None:
-            self._client = CopilotClient()
+        client = self._client or CopilotClient()
 
-        await self._client.start()
+        try:
+            await client.start()
+        except Exception:
+            # Don't keep a half-started client around
+            self._client = None
+            self._started = False
+            raise
+
+        self._client = client
+        self._started = True
         log.info("CopilotClient started")
 
         # Emit ready on the main thread
@@ -171,6 +180,7 @@ class CopilotService(GObject.Object):
         if self._client is not None:
             await self._client.stop()
             self._client = None
+        self._started = False
         self._sessions.clear()
         log.info("CopilotClient stopped")
 
@@ -186,8 +196,8 @@ class CopilotService(GObject.Object):
         run_async(self._list_models_async(), error_callback=self._on_error)
 
     async def _list_models_async(self) -> None:
-        if self._client is None:
-            raise RuntimeError("Client not started")
+        if not self._started or self._client is None:
+            raise RuntimeError("Copilot is still connecting — please wait a moment")
 
         models = await self._client.list_models()
         self._models = models
@@ -206,8 +216,8 @@ class CopilotService(GObject.Object):
         run_async(self._check_auth_async(), error_callback=self._on_error)
 
     async def _check_auth_async(self) -> None:
-        if self._client is None:
-            raise RuntimeError("Client not started")
+        if not self._started or self._client is None:
+            raise RuntimeError("Copilot is still connecting — please wait a moment")
 
         status = await self._client.get_auth_status()
         login = status.login or ""
@@ -234,8 +244,8 @@ class CopilotService(GObject.Object):
         )
 
     async def _create_conversation_async(self, model: str) -> None:
-        if self._client is None:
-            raise RuntimeError("Client not started")
+        if not self._started or self._client is None:
+            raise RuntimeError("Copilot is still connecting — please wait a moment")
 
         config: SessionConfig = {
             "on_permission_request": PermissionHandler.approve_all,
@@ -327,7 +337,10 @@ class CopilotService(GObject.Object):
         etype = event.type
         data = event.data
 
-        if etype == SessionEventType.ASSISTANT_MESSAGE_DELTA:
+        if etype in (
+            SessionEventType.ASSISTANT_MESSAGE_DELTA,
+            SessionEventType.ASSISTANT_STREAMING_DELTA,
+        ):
             delta = getattr(data, "delta_content", None) or ""
             if delta:
                 # Append to conversation model
