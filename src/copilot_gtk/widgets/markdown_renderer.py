@@ -51,6 +51,9 @@ class MarkdownTextView(Gtk.TextView):
 
     __gtype_name__ = "MarkdownTextView"
 
+    # Maximum natural width (px) for content-adaptive sizing.
+    _MAX_CONTENT_WIDTH = 600
+
     def __init__(self) -> None:
         super().__init__(
             editable=False,
@@ -64,6 +67,40 @@ class MarkdownTextView(Gtk.TextView):
         self._raw_markdown = ""
         self._code_blocks: list[CodeBlock] = []
         self._setup_tags()
+
+    # ------------------------------------------------------------------
+    # Size negotiation
+    # ------------------------------------------------------------------
+
+    def do_measure(self, orientation: Gtk.Orientation, for_size: int):
+        """Content-aware natural width.
+
+        ``Gtk.TextView`` with ``wrap_mode=WORD_CHAR`` reports a natural
+        width equal to the longest single word, which collapses the
+        message bubble.  We override this to return a width derived from
+        the actual content length (capped at :pyattr:`_MAX_CONTENT_WIDTH`).
+        """
+        min_w, nat_w, min_bl, nat_bl = Gtk.TextView.do_measure(
+            self, orientation, for_size
+        )
+        if orientation == Gtk.Orientation.HORIZONTAL:
+            if self._raw_markdown:
+                lines = self._raw_markdown.split("\n")
+                max_line_len = max(len(line) for line in lines)
+                # Use Pango font metrics for accurate char width
+                ctx = self.get_pango_context()
+                metrics = ctx.get_metrics(None, None)
+                char_w = metrics.get_approximate_char_width() / Pango.SCALE
+                content_w = min(
+                    int(max_line_len * char_w) + 30,
+                    self._MAX_CONTENT_WIDTH,
+                )
+                nat_w = max(min_w, content_w)
+            else:
+                nat_w = max(min_w, 100)
+            # No horizontal baselines
+            return min_w, nat_w, -1, -1
+        return min_w, nat_w, min_bl, nat_bl
 
     # ------------------------------------------------------------------
     # Tag setup
