@@ -39,9 +39,6 @@ class CopilotGTKApplication(Adw.Application):
         # Application-level actions
         self._setup_actions()
 
-        # Install the gbulb async bridge
-        install_async_bridge()
-
     def do_activate(self) -> None:
         """Called when the application is activated."""
         win = self.props.active_window
@@ -142,8 +139,22 @@ def main() -> int:
         level=logging.DEBUG,
         format="%(levelname)s %(name)s: %(message)s",
     )
+
+    # Install gbulb BEFORE creating / running the application.
+    # This replaces the default asyncio event loop with one backed
+    # by the GLib main loop.
+    install_async_bridge()
+
+    import asyncio
+    loop = asyncio.get_event_loop()
+
     app = CopilotGTKApplication()
-    return app.run(sys.argv)
+
+    # Use gbulb's run_forever(application=...) so the asyncio loop
+    # is properly marked as "running" — copilot-sdk requires
+    # asyncio.get_running_loop() to succeed.
+    loop.run_forever(application=app, argv=sys.argv)
+    return 0
 
 
 if __name__ == '__main__':
