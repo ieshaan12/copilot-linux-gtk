@@ -75,3 +75,44 @@ class TestConversationList:
         # Simulate delete from row
         cl._rows["s1"].emit("delete-requested", "s1")
         assert received == ["s1"]
+
+    def test_conversation_rename_requested_signal(self):
+        cl = ConversationList()
+        cl.add_conversation(_make_conv("s1"))
+        received = []
+        cl.connect(
+            "conversation-rename-requested",
+            lambda _w, sid: received.append(sid),
+        )
+        cl._rows["s1"].emit("rename-requested", "s1")
+        assert received == ["s1"]
+
+    def test_filter_by_title(self):
+        cl = ConversationList()
+        cl.add_conversation(_make_conv("s1", "Weather today"))
+        cl.add_conversation(_make_conv("s2", "Code review"))
+        cl.add_conversation(_make_conv("s3", "Weather forecast"))
+
+        cl.filter_by_title("weather")
+        assert cl._rows["s1"].get_visible() is True
+        assert cl._rows["s2"].get_visible() is False
+        assert cl._rows["s3"].get_visible() is True
+
+    def test_filter_empty_shows_all(self):
+        cl = ConversationList()
+        cl.add_conversation(_make_conv("s1", "A"))
+        cl.add_conversation(_make_conv("s2", "B"))
+
+        cl.filter_by_title("A")
+        assert cl._rows["s2"].get_visible() is False
+
+        cl.filter_by_title("")
+        assert cl._rows["s1"].get_visible() is True
+        assert cl._rows["s2"].get_visible() is True
+
+    def test_filter_case_insensitive(self):
+        cl = ConversationList()
+        cl.add_conversation(_make_conv("s1", "Hello World"))
+
+        cl.filter_by_title("HELLO")
+        assert cl._rows["s1"].get_visible() is True

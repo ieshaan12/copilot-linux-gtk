@@ -39,6 +39,13 @@ class TestConversationRow:
         row._on_delete(None, None)
         assert received == ["s1"]
 
+    def test_rename_signal(self):
+        row = ConversationRow(session_id="s1")
+        received = []
+        row.connect("rename-requested", lambda _r, sid: received.append(sid))
+        row._on_rename(None, None)
+        assert received == ["s1"]
+
     def test_today_timestamp_format(self):
         now = datetime.now(timezone.utc)
         row = ConversationRow(session_id="s1", updated_at=now)

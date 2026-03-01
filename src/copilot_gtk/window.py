@@ -16,7 +16,10 @@ from gi.repository import Adw, Gio, GLib, GObject, Gtk  # noqa: E402
 if TYPE_CHECKING:
     from .backend import CopilotService
     from .backend.auth_manager import AuthManager
+    from .backend.conversation_store import ConversationStore
 
+from .backend.conversation import Conversation  # noqa: E402
+from .backend.message import Message, MessageRole  # noqa: E402
 from .widgets.chat_input import ChatInput  # noqa: E402
 from .widgets.chat_view import ChatView  # noqa: E402
 from .widgets.conversation_list import ConversationList  # noqa: E402
@@ -38,12 +41,14 @@ class CopilotWindow(Adw.ApplicationWindow):
         service: CopilotService,
         auth_manager: AuthManager | None = None,
         settings: Gio.Settings | None = None,
+        store: ConversationStore | None = None,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
         self._service = service
         self._auth_manager = auth_manager
         self._settings = settings
+        self._store = store
         self._current_session_id: str | None = None
 
         self.set_default_size(1000, 700)
@@ -71,6 +76,9 @@ class CopilotWindow(Adw.ApplicationWindow):
         # --- Actions ---
         self._setup_actions()
 
+        # --- Load persisted conversations into sidebar ---
+        self._load_persisted_conversations()
+
     # ------------------------------------------------------------------
     # Sidebar
     # ------------------------------------------------------------------
@@ -81,14 +89,38 @@ class CopilotWindow(Adw.ApplicationWindow):
         sidebar_toolbar = Adw.ToolbarView()
         sidebar_page.set_child(sidebar_toolbar)
 
-        # Header bar with "New Chat" button
+        # Header bar with "New Chat" button and search toggle
         sidebar_header = Adw.HeaderBar()
         new_chat_btn = Gtk.Button(icon_name="list-add-symbolic")
         new_chat_btn.set_tooltip_text("New Chat (Ctrl+N)")
         new_chat_btn.add_css_class("flat")
         new_chat_btn.set_action_name("win.new-chat")
         sidebar_header.pack_start(new_chat_btn)
+
+        # Search toggle button
+        self._search_button = Gtk.ToggleButton(icon_name="system-search-symbolic")
+        self._search_button.set_tooltip_text("Search Conversations (Ctrl+K)")
+        self._search_button.add_css_class("flat")
+        sidebar_header.pack_end(self._search_button)
+
         sidebar_toolbar.add_top_bar(sidebar_header)
+
+        # Search bar
+        self._search_bar = Gtk.SearchBar()
+        self._search_bar.set_show_close_button(True)
+        self._search_entry = Gtk.SearchEntry()
+        self._search_entry.set_placeholder_text("Search conversations…")
+        self._search_entry.set_hexpand(True)
+        self._search_bar.set_child(self._search_entry)
+        self._search_bar.connect_entry(self._search_entry)
+        self._search_button.bind_property(
+            "active",
+            self._search_bar,
+            "search-mode-enabled",
+            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
+        )
+        self._search_entry.connect("search-changed", self._on_search_changed)
+        sidebar_toolbar.add_top_bar(self._search_bar)
 
         # Conversation list
         self._conversation_list = ConversationList()
@@ -97,6 +129,9 @@ class CopilotWindow(Adw.ApplicationWindow):
         )
         self._conversation_list.connect(
             "conversation-delete-requested", self._on_conversation_delete_requested
+        )
+        self._conversation_list.connect(
+            "conversation-rename-requested", self._on_conversation_rename_requested
         )
         sidebar_toolbar.set_content(self._conversation_list)
 
@@ -187,6 +222,10 @@ class CopilotWindow(Adw.ApplicationWindow):
         self._new_chat_action.set_enabled(False)  # disabled until SDK ready
         self.add_action(self._new_chat_action)
 
+        search_action = Gio.SimpleAction(name="search-conversations")
+        search_action.connect("activate", self._on_search_action)
+        self.add_action(search_action)
+
     # ------------------------------------------------------------------
     # Service signal handlers
     # ------------------------------------------------------------------
@@ -223,6 +262,29 @@ class CopilotWindow(Adw.ApplicationWindow):
         if session_id == self._current_session_id:
             self._chat_view.finish_streaming()
 
+        # --- Auto-title generation (TASK-046) ---
+        conv = self._service.conversations.get(session_id)
+        if conv is not None and conv.title == "New Chat" and content:
+            # Use the first user message as title source (first ~50 chars)
+            first_user_msg = None
+            for msg in conv.messages:
+                if msg.role == MessageRole.USER:
+                    first_user_msg = msg
+                    break
+            if first_user_msg:
+                auto_title = first_user_msg.content[:50].strip()
+                if len(first_user_msg.content) > 50:
+                    auto_title += "…"
+                conv.title = auto_title
+                self._conversation_list.update_title(session_id, auto_title)
+                if session_id == self._current_session_id:
+                    self._content_page.set_title(auto_title)
+
+        # --- Persist conversation + messages (TASK-045) ---
+        if conv is not None and self._store is not None:
+            self._store.save_conversation(conv)
+            self._store.save_messages(session_id, conv.messages)
+
     def _on_session_idle(
         self, _service: CopilotService, session_id: str
     ) -> None:
@@ -236,6 +298,10 @@ class CopilotWindow(Adw.ApplicationWindow):
             self._conversation_list.add_conversation(conv)
             self._select_conversation(session_id)
 
+            # Persist the new conversation to the store
+            if self._store is not None:
+                self._store.save_conversation(conv)
+
         if session_id == self._current_session_id:
             self._chat_input.set_loading(False)
 
@@ -243,6 +309,11 @@ class CopilotWindow(Adw.ApplicationWindow):
         self, _service: CopilotService, session_id: str, title: str
     ) -> None:
         self._conversation_list.update_title(session_id, title)
+        if session_id == self._current_session_id:
+            self._content_page.set_title(title)
+        # Persist title change
+        if self._store is not None:
+            self._store.update_title(session_id, title)
 
     def _on_turn_start(
         self, _service: CopilotService, session_id: str
@@ -351,6 +422,13 @@ class CopilotWindow(Adw.ApplicationWindow):
         self._service.send_message(self._current_session_id, text)
         self._chat_input.set_loading(True)
 
+        # Persist messages after sending
+        if self._store is not None:
+            conv = self._service.conversations.get(self._current_session_id)
+            if conv is not None:
+                self._store.save_messages(self._current_session_id, conv.messages)
+                self._store.update_timestamp(self._current_session_id)
+
     def _on_stop_requested(self, _input: ChatInput) -> None:
         """Handle stop-generation request."""
         if self._current_session_id:
@@ -387,6 +465,9 @@ class CopilotWindow(Adw.ApplicationWindow):
                 return
             self._service.destroy_conversation(session_id)
             self._conversation_list.remove_conversation(session_id)
+            # Remove from persistent store
+            if self._store is not None:
+                self._store.delete_conversation(session_id)
             if self._current_session_id == session_id:
                 self._current_session_id = None
                 self._chat_view.clear()
@@ -395,12 +476,78 @@ class CopilotWindow(Adw.ApplicationWindow):
         dialog.connect("response", on_response)
         dialog.present(self)
 
+    def _on_conversation_rename_requested(
+        self,
+        _list: ConversationList,
+        session_id: str,
+    ) -> None:
+        """Show a rename dialog for the conversation (TASK-048)."""
+        conv = self._service.conversations.get(session_id)
+        current_title = conv.title if conv else "New Chat"
+
+        dialog = Adw.AlertDialog()
+        dialog.set_heading("Rename Conversation")
+        dialog.set_body("Enter a new title:")
+
+        entry = Gtk.Entry()
+        entry.set_text(current_title)
+        entry.set_activates_default(True)
+        dialog.set_extra_child(entry)
+
+        dialog.add_response("cancel", "Cancel")
+        dialog.add_response("rename", "Rename")
+        dialog.set_response_appearance(
+            "rename", Adw.ResponseAppearance.SUGGESTED
+        )
+        dialog.set_default_response("rename")
+        dialog.set_close_response("cancel")
+
+        def on_response(d: Adw.AlertDialog, response: str) -> None:
+            if response != "rename":
+                return
+            new_title = entry.get_text().strip()
+            if not new_title:
+                return
+            # Update in-memory model
+            if conv is not None:
+                conv.title = new_title
+            # Update sidebar
+            self._conversation_list.update_title(session_id, new_title)
+            # Update content header if this is the active conversation
+            if session_id == self._current_session_id:
+                self._content_page.set_title(new_title)
+            # Persist
+            if self._store is not None:
+                self._store.update_title(session_id, new_title)
+
+        dialog.connect("response", on_response)
+        dialog.present(self)
+
+    def _on_search_action(
+        self, _action: Gio.SimpleAction, _param: GLib.Variant | None
+    ) -> None:
+        """Toggle the search bar (Ctrl+K)."""
+        self._search_button.set_active(not self._search_button.get_active())
+        if self._search_button.get_active():
+            self._search_entry.grab_focus()
+
+    def _on_search_changed(self, entry: Gtk.SearchEntry) -> None:
+        """Filter the conversation list as the user types."""
+        query = entry.get_text()
+        self._conversation_list.filter_by_title(query)
+
     def _select_conversation(self, session_id: str) -> None:
         """Switch the chat view to the given conversation."""
         self._current_session_id = session_id
         conv = self._service.conversations.get(session_id)
+
         if conv is None:
-            return
+            # This may be a persisted conversation not yet in CopilotService.
+            # Load from store and create an in-memory Conversation object.
+            if self._store is not None:
+                conv = self._load_conversation_from_store(session_id)
+            if conv is None:
+                return
 
         self._content_page.set_title(conv.title)
         self._chat_view.load_conversation(conv)
@@ -410,6 +557,39 @@ class CopilotWindow(Adw.ApplicationWindow):
 
         # Collapse sidebar on narrow layout
         self._split_view.set_show_content(True)
+
+    # ------------------------------------------------------------------
+    # Persistence helpers
+    # ------------------------------------------------------------------
+
+    def _load_persisted_conversations(self) -> None:
+        """Load conversations from the store into the sidebar on startup."""
+        if self._store is None:
+            return
+        for conv_data in self._store.list_conversations():
+            conv = Conversation.from_dict(conv_data)
+            # Load messages from store so they're available in memory
+            msg_dicts = self._store.load_messages(conv.session_id)
+            for md in msg_dicts:
+                conv.messages.append(Message.from_dict(md))
+            # Register in service's in-memory map (no SDK session yet)
+            self._service._conversations[conv.session_id] = conv
+            self._conversation_list.add_conversation(conv)
+
+    def _load_conversation_from_store(self, session_id: str) -> Conversation | None:
+        """Load a single conversation + messages from the store into memory."""
+        if self._store is None:
+            return None
+        conv_data = self._store.get_conversation(session_id)
+        if conv_data is None:
+            return None
+        conv = Conversation.from_dict(conv_data)
+        msg_dicts = self._store.load_messages(session_id)
+        for md in msg_dicts:
+            conv.messages.append(Message.from_dict(md))
+        # Register in service's in-memory map
+        self._service._conversations[session_id] = conv
+        return conv
 
     # ------------------------------------------------------------------
     # Public helpers

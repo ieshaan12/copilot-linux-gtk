@@ -14,6 +14,7 @@ from gi.repository import Adw, Gdk, Gio, Gtk  # noqa: E402
 
 from .backend import CopilotService, install_async_bridge  # noqa: E402
 from .backend.auth_manager import AuthManager  # noqa: E402
+from .backend.conversation_store import ConversationStore  # noqa: E402
 from .window import CopilotWindow  # noqa: E402
 from .widgets.auth_dialog import AuthDialog  # noqa: E402
 from .widgets.preferences_dialog import PreferencesDialog  # noqa: E402
@@ -31,6 +32,7 @@ class CopilotGTKApplication(Adw.Application):
         )
         self._auth_manager = AuthManager()
         self._service = CopilotService()
+        self._store = ConversationStore()
         self._window: CopilotWindow | None = None
         self._settings: Gio.Settings | None = None
 
@@ -67,6 +69,7 @@ class CopilotGTKApplication(Adw.Application):
                 service=self._service,
                 auth_manager=self._auth_manager,
                 settings=self._settings,
+                store=self._store,
                 application=self,
             )
             self._window = win
@@ -123,6 +126,7 @@ class CopilotGTKApplication(Adw.Application):
         self.add_action(quit_action)
         self.set_accels_for_action("app.quit", ["<Control>q"])
         self.set_accels_for_action("win.new-chat", ["<Control>n"])
+        self.set_accels_for_action("win.search-conversations", ["<Control>k"])
 
     # ------------------------------------------------------------------
     # Action handlers
