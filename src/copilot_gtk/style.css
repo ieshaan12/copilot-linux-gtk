@@ -27,6 +27,47 @@
     background-color: @card_bg_color;
 }
 
+/* MarkdownTextView inside assistant bubbles */
+.message-assistant textview {
+    background-color: transparent;
+    color: inherit;
+}
+
+.message-assistant textview text {
+    background-color: transparent;
+}
+
+/* ------------------------------------------------------------------ */
+/* Code Blocks                                                         */
+/* ------------------------------------------------------------------ */
+
+.code-block {
+    border-radius: 8px;
+    border: 1px solid @borders;
+    background-color: alpha(@window_bg_color, 0.6);
+    margin-top: 6px;
+    margin-bottom: 6px;
+}
+
+.code-block-header {
+    border-bottom: 1px solid @borders;
+}
+
+.code-block-source {
+    border-radius: 0 0 8px 8px;
+    background-color: transparent;
+}
+
+.code-block-source text {
+    background-color: transparent;
+}
+
+.code-copy-btn {
+    min-height: 24px;
+    min-width: 24px;
+    padding: 2px;
+}
+
 /* ------------------------------------------------------------------ */
 /* Chat Input                                                          */
 /* ------------------------------------------------------------------ */

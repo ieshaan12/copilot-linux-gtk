@@ -15,12 +15,15 @@ from gi.repository import Adw, Gtk, Pango  # noqa: E402
 if TYPE_CHECKING:
     from ..backend import MessageRole
 
+from .markdown_renderer import MarkdownTextView  # noqa: E402
+
 
 class MessageBubble(Gtk.Box):
     """Renders a single message with role-appropriate styling.
 
-    User messages are right-aligned with a coloured background.
-    Assistant messages are left-aligned with a different background.
+    User messages are right-aligned with a coloured background and plain
+    text.  Assistant messages are left-aligned and rendered as rich
+    Markdown via :class:`MarkdownTextView`.
     """
 
     __gtype_name__ = "MessageBubble"
@@ -69,17 +72,29 @@ class MessageBubble(Gtk.Box):
         )
         frame.set_child(content_box)
 
-        # Text label (supports wrapping)
-        self._text_label = Gtk.Label(
-            label=content,
-            xalign=0,
-            wrap=True,
-            wrap_mode=Pango.WrapMode.WORD_CHAR,
-            selectable=True,
-            use_markup=False,
-        )
-        self._text_label.add_css_class("body")
-        content_box.append(self._text_label)
+        # --- Content widget selection ---
+        self._markdown_view: MarkdownTextView | None = None
+        self._text_label: Gtk.Label | None = None
+
+        if role == "user":
+            # User messages: plain label
+            self._text_label = Gtk.Label(
+                label=content,
+                xalign=0,
+                wrap=True,
+                wrap_mode=Pango.WrapMode.WORD_CHAR,
+                selectable=True,
+                use_markup=False,
+            )
+            self._text_label.add_css_class("body")
+            content_box.append(self._text_label)
+        else:
+            # Assistant / system messages: Markdown renderer
+            self._markdown_view = MarkdownTextView()
+            self._markdown_view.set_hexpand(True)
+            if content:
+                self._markdown_view.set_markdown(content)
+            content_box.append(self._markdown_view)
 
         # Spinner for streaming
         self._spinner = Adw.Spinner()
@@ -110,17 +125,27 @@ class MessageBubble(Gtk.Box):
 
     @property
     def content(self) -> str:
-        return self._text_label.get_label()
+        if self._text_label is not None:
+            return self._text_label.get_label()
+        if self._markdown_view is not None:
+            return self._markdown_view.get_markdown()
+        return ""
 
     def append_content(self, delta: str) -> None:
         """Append streaming content to this bubble."""
-        current = self._text_label.get_label()
-        self._text_label.set_label(current + delta)
+        if self._text_label is not None:
+            current = self._text_label.get_label()
+            self._text_label.set_label(current + delta)
+        elif self._markdown_view is not None:
+            self._markdown_view.append_markdown_delta(delta)
         self._spinner.set_visible(False)
 
     def set_content(self, text: str) -> None:
         """Set the full content of this bubble."""
-        self._text_label.set_label(text)
+        if self._text_label is not None:
+            self._text_label.set_label(text)
+        elif self._markdown_view is not None:
+            self._markdown_view.set_markdown(text)
         self._spinner.set_visible(False)
 
     def finish_streaming(self) -> None:
