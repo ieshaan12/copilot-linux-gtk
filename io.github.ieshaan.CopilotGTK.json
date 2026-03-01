@@ -1,5 +1,5 @@
 {
-    "app-id": "io.github.ieshaan.CopilotGTK.Devel",
+    "app-id": "io.github.ieshaan.CopilotGTK",
     "runtime": "org.gnome.Platform",
     "runtime-version": "47",
     "sdk": "org.gnome.Sdk",
@@ -41,13 +41,10 @@
         {
             "name": "copilot-gtk",
             "buildsystem": "meson",
-            "config-opts": [
-                "-Dprofile=development"
-            ],
             "sources": [
                 {
                     "type": "dir",
-                    "path": ".."
+                    "path": "."
                 }
             ]
         }

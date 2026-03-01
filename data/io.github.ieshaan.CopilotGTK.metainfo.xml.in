@@ -31,8 +31,9 @@
 
   <launchable type="desktop-id">io.github.ieshaan.CopilotGTK.desktop</launchable>
 
-  <url type="homepage">https://github.com/ieshaan/copilot-linux-gtk</url>
-  <url type="bugtracker">https://github.com/ieshaan/copilot-linux-gtk/issues</url>
+  <url type="homepage">https://github.com/ieshaan12/copilot-linux-gtk</url>
+  <url type="bugtracker">https://github.com/ieshaan12/copilot-linux-gtk/issues</url>
+  <url type="vcs-browser">https://github.com/ieshaan12/copilot-linux-gtk</url>
 
   <content_rating type="oars-1.1" />
 
@@ -50,10 +51,30 @@
     <control>pointing</control>
   </recommends>
 
+  <screenshots>
+    <screenshot type="default">
+      <caption>Chat view with streaming AI responses</caption>
+      <image>https://raw.githubusercontent.com/ieshaan12/copilot-linux-gtk/main/data/screenshots/chat-view.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Conversation sidebar with search</caption>
+      <image>https://raw.githubusercontent.com/ieshaan12/copilot-linux-gtk/main/data/screenshots/sidebar.png</image>
+    </screenshot>
+  </screenshots>
+
   <releases>
-    <release version="0.1.0" date="2026-03-01">
+    <release version="0.1.0" date="2026-03-02">
       <description>
         <p>Initial release — Technical Preview</p>
+        <ul>
+          <li>Streaming AI chat via GitHub Copilot SDK</li>
+          <li>Multiple concurrent conversations with persistence</li>
+          <li>Markdown rendering with syntax-highlighted code blocks</li>
+          <li>Conversation search and management</li>
+          <li>Authentication via GitHub token or BYOK</li>
+          <li>Keyboard shortcuts and accessibility labels</li>
+          <li>Adaptive layout for narrow windows</li>
+        </ul>
       </description>
     </release>
   </releases>

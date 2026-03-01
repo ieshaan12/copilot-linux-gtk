@@ -30,9 +30,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ieshaan/copilot-linux-gtk"
-Repository = "https://github.com/ieshaan/copilot-linux-gtk"
-Issues = "https://github.com/ieshaan/copilot-linux-gtk/issues"
+Homepage = "https://github.com/ieshaan12/copilot-linux-gtk"
+Repository = "https://github.com/ieshaan12/copilot-linux-gtk"
+Issues = "https://github.com/ieshaan12/copilot-linux-gtk/issues"
 
 [project.scripts]
 copilot-gtk = "copilot_gtk.main:main"
