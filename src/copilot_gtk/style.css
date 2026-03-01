@@ -1,0 +1,66 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* Copilot for GNOME — Custom Styles */
+
+/* ------------------------------------------------------------------ */
+/* Message Bubbles                                                     */
+/* ------------------------------------------------------------------ */
+
+.message-bubble {
+    border-radius: 12px;
+    border: none;
+}
+
+.message-frame {
+    max-width: 600px;
+    min-width: 80px;
+}
+
+.message-user {
+    background-color: @accent_bg_color;
+    color: @accent_fg_color;
+}
+
+.message-user label {
+    color: @accent_fg_color;
+}
+
+.message-assistant {
+    background-color: @card_bg_color;
+}
+
+/* ------------------------------------------------------------------ */
+/* Chat Input                                                          */
+/* ------------------------------------------------------------------ */
+
+.chat-input-frame {
+    border-radius: 24px;
+    border: 1px solid @borders;
+    background-color: @view_bg_color;
+}
+
+.chat-text-input {
+    background: transparent;
+    border: none;
+    outline: none;
+}
+
+.chat-text-input text {
+    background: transparent;
+}
+
+/* ------------------------------------------------------------------ */
+/* Conversation Row                                                    */
+/* ------------------------------------------------------------------ */
+
+.conversation-row {
+    border-radius: 8px;
+    transition: background-color 200ms ease;
+}
+
+/* ------------------------------------------------------------------ */
+/* Chat scroll area                                                    */
+/* ------------------------------------------------------------------ */
+
+.chat-scroll {
+    background-color: @window_bg_color;
+}
