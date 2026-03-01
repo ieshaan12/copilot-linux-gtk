@@ -31,6 +31,11 @@ class ConversationRow(Gtk.ListBoxRow):
             None,
             (str,),  # session_id
         ),
+        "rename-requested": (
+            GObject.SignalFlags.RUN_LAST,
+            None,
+            (str,),  # session_id
+        ),
     }
 
     def __init__(
@@ -118,19 +123,26 @@ class ConversationRow(Gtk.ListBoxRow):
     # ------------------------------------------------------------------
 
     def _setup_context_menu(self) -> None:
-        """Add a right-click context menu with a Delete option."""
+        """Add a right-click context menu with Rename and Delete options."""
         menu_model = __import__("gi").repository.Gio.Menu()
+        menu_model.append("Rename", "row.rename")
         menu_model.append("Delete", "row.delete")
 
         popover = Gtk.PopoverMenu(menu_model=menu_model)
         popover.set_parent(self)
         popover.set_has_arrow(False)
 
-        # Register action
+        # Register actions
         action_group = __import__("gi").repository.Gio.SimpleActionGroup()
+
         delete_action = __import__("gi").repository.Gio.SimpleAction(name="delete")
         delete_action.connect("activate", self._on_delete)
         action_group.add_action(delete_action)
+
+        rename_action = __import__("gi").repository.Gio.SimpleAction(name="rename")
+        rename_action.connect("activate", self._on_rename)
+        action_group.add_action(rename_action)
+
         self.insert_action_group("row", action_group)
 
         # Right-click gesture
@@ -147,6 +159,9 @@ class ConversationRow(Gtk.ListBoxRow):
 
     def _on_delete(self, _action, _param) -> None:
         self.emit("delete-requested", self._session_id)
+
+    def _on_rename(self, _action, _param) -> None:
+        self.emit("rename-requested", self._session_id)
 
     # ------------------------------------------------------------------
     # Helpers

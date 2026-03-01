@@ -41,6 +41,11 @@ class ConversationList(Gtk.Box):
             None,
             (str,),  # session_id
         ),
+        "conversation-rename-requested": (
+            GObject.SignalFlags.RUN_LAST,
+            None,
+            (str,),  # session_id
+        ),
     }
 
     def __init__(self) -> None:
@@ -77,6 +82,7 @@ class ConversationList(Gtk.Box):
             updated_at=conv.updated_at,
         )
         row.connect("delete-requested", self._on_row_delete_requested)
+        row.connect("rename-requested", self._on_row_rename_requested)
         self._rows[conv.session_id] = row
         self._list_box.prepend(row)  # newest on top
 
@@ -123,3 +129,24 @@ class ConversationList(Gtk.Box):
         self, row: ConversationRow, session_id: str
     ) -> None:
         self.emit("conversation-delete-requested", session_id)
+
+    def _on_row_rename_requested(
+        self, row: ConversationRow, session_id: str
+    ) -> None:
+        self.emit("conversation-rename-requested", session_id)
+
+    # ------------------------------------------------------------------
+    # Search / filter
+    # ------------------------------------------------------------------
+
+    def filter_by_title(self, query: str) -> None:
+        """Show only conversations whose title contains *query* (case-insensitive).
+
+        If *query* is empty, all rows are shown.
+        """
+        q = query.strip().lower()
+        for sid, row in self._rows.items():
+            if not q:
+                row.set_visible(True)
+            else:
+                row.set_visible(q in row.title.lower())
