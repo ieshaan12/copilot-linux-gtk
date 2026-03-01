@@ -46,21 +46,23 @@ class MessageBubble(Gtk.Box):
         self._role = role
         self._is_streaming = is_streaming
 
-        # Align: user messages to the right, assistant to the left
+        # Align: user messages to the right, assistant to the left.
+        # Content-adaptive sizing: frame.hexpand=False so the bubble
+        # shrinks to its content's natural width.
         if role == "user":
             self.set_halign(Gtk.Align.END)
         else:
             self.set_halign(Gtk.Align.START)
 
         # Avatar
-        avatar_char = "Y" if role == "user" else "C"
         avatar_name = "You" if role == "user" else "Copilot"
         avatar = Adw.Avatar(size=32, text=avatar_name, show_initials=True)
 
-        # Content frame
+        # Content frame — hexpand=False lets halign control placement
         frame = Gtk.Frame()
         frame.add_css_class("message-bubble")
         frame.add_css_class(f"message-{role}")
+        frame.set_hexpand(False)
 
         content_box = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL,
@@ -77,7 +79,8 @@ class MessageBubble(Gtk.Box):
         self._text_label: Gtk.Label | None = None
 
         if role == "user":
-            # User messages: plain label
+            # User messages: plain label with max_width_chars so
+            # short text stays compact and long text wraps.
             self._text_label = Gtk.Label(
                 label=content,
                 xalign=0,
@@ -85,13 +88,18 @@ class MessageBubble(Gtk.Box):
                 wrap_mode=Pango.WrapMode.WORD_CHAR,
                 selectable=True,
                 use_markup=False,
+                max_width_chars=60,
+            )
+            self._text_label.set_natural_wrap_mode(
+                Gtk.NaturalWrapMode.WORD
             )
             self._text_label.add_css_class("body")
             content_box.append(self._text_label)
         else:
-            # Assistant / system messages: Markdown renderer
+            # Assistant / system messages: Markdown renderer.
+            # MarkdownTextView overrides do_measure() to report a
+            # content-aware natural width instead of single-word width.
             self._markdown_view = MarkdownTextView()
-            self._markdown_view.set_hexpand(True)
             if content:
                 self._markdown_view.set_markdown(content)
             content_box.append(self._markdown_view)
@@ -109,10 +117,6 @@ class MessageBubble(Gtk.Box):
             self.append(avatar)
             self.append(frame)
 
-        # Constrain max width
-        frame.set_size_request(-1, -1)
-        self.set_hexpand(False)
-        # We'll use CSS max-width via a size class
         frame.add_css_class("message-frame")
 
     # ------------------------------------------------------------------
