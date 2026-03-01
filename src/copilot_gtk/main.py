@@ -127,6 +127,9 @@ class CopilotGTKApplication(Adw.Application):
         self.set_accels_for_action("app.quit", ["<Control>q"])
         self.set_accels_for_action("win.new-chat", ["<Control>n"])
         self.set_accels_for_action("win.search-conversations", ["<Control>k"])
+        self.set_accels_for_action("win.close-conversation", ["<Control>w"])
+        self.set_accels_for_action("win.show-help-overlay", ["F1"])
+        self.set_accels_for_action("win.escape-pressed", ["Escape"])
 
     # ------------------------------------------------------------------
     # Action handlers

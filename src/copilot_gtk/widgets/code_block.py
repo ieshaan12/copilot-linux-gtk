@@ -61,6 +61,10 @@ class CodeBlock(Gtk.Box):
         copy_btn.add_css_class("circular")
         copy_btn.add_css_class("code-copy-btn")
         copy_btn.connect("clicked", self._on_copy_clicked)
+        copy_btn.update_property(
+            [Gtk.AccessibleProperty.LABEL],
+            [f"Copy {language or 'code'} to clipboard"],
+        )
         header.append(copy_btn)
         self._copy_btn = copy_btn
 

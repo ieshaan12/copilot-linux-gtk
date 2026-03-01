@@ -10,3 +10,4 @@ from .conversation_row import ConversationRow  # noqa: F401
 from .markdown_renderer import MarkdownTextView  # noqa: F401
 from .message_bubble import MessageBubble  # noqa: F401
 from .preferences_dialog import PreferencesDialog  # noqa: F401
+from .shortcuts_window import build_shortcuts_window  # noqa: F401

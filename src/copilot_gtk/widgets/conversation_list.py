@@ -108,6 +108,10 @@ class ConversationList(Gtk.Box):
         if row is not None:
             self._list_box.select_row(row)
 
+    def deselect_all(self) -> None:
+        """Deselect all conversation rows."""
+        self._list_box.unselect_all()
+
     def get_selected_session_id(self) -> str | None:
         """Return the session_id of the currently selected conversation."""
         row = self._list_box.get_selected_row()

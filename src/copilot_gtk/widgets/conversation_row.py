@@ -49,6 +49,9 @@ class ConversationRow(Gtk.ListBoxRow):
         self._session_id = session_id
 
         self.add_css_class("conversation-row")
+        self.update_property(
+            [Gtk.AccessibleProperty.LABEL], [f"Conversation: {title}"],
+        )
 
         # Main box
         box = Gtk.Box(
@@ -117,6 +120,9 @@ class ConversationRow(Gtk.ListBoxRow):
     @title.setter
     def title(self, value: str) -> None:
         self._title_label.set_label(value)
+        self.update_property(
+            [Gtk.AccessibleProperty.LABEL], [f"Conversation: {value}"],
+        )
 
     # ------------------------------------------------------------------
     # Context menu

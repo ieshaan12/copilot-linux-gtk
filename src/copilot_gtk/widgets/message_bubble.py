@@ -57,6 +57,10 @@ class MessageBubble(Gtk.Box):
         # Avatar
         avatar_name = "You" if role == "user" else "Copilot"
         avatar = Adw.Avatar(size=32, text=avatar_name, show_initials=True)
+        avatar.update_property(
+            [Gtk.AccessibleProperty.LABEL],
+            [f"{avatar_name} avatar"],
+        )
 
         # Content frame — hexpand=False lets halign control placement
         frame = Gtk.Frame()

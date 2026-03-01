@@ -46,7 +46,8 @@ class TestCopilotWindow:
     def test_initial_state_shows_empty(self):
         service = _make_mock_service()
         win = CopilotWindow(service=service)
-        assert win._content_stack.get_visible_child_name() == "empty"
+        # Before SDK signals ready, the content shows the loading state
+        assert win._content_stack.get_visible_child_name() == "loading"
 
     def test_split_view_exists(self):
         service = _make_mock_service()
@@ -324,3 +325,98 @@ class TestWindowSearch:
         win._on_search_changed(win._search_entry)  # empty text
         assert win._conversation_list._rows["s1"].get_visible() is True
         assert win._conversation_list._rows["s2"].get_visible() is True
+
+
+class TestWindowPhase7:
+    """Tests for Phase 7 features: shortcuts, loading, error, close, escape."""
+
+    # ---- Loading state (TASK-055) ----
+
+    def test_initial_state_is_loading(self):
+        service = _make_mock_service()
+        win = CopilotWindow(service=service)
+        assert win._content_stack.get_visible_child_name() == "loading"
+
+    def test_service_ready_transitions_to_empty(self):
+        service = _make_mock_service()
+        win = CopilotWindow(service=service)
+        win._on_service_ready(service)
+        assert win._content_stack.get_visible_child_name() == "empty"
+
+    def test_service_ready_enables_new_chat(self):
+        service = _make_mock_service()
+        win = CopilotWindow(service=service)
+        assert not win._new_chat_action.get_enabled()
+        win._on_service_ready(service)
+        assert win._new_chat_action.get_enabled()
+
+    # ---- Fatal error (TASK-056) ----
+
+    def test_fatal_error_shows_error_page(self):
+        service = _make_mock_service()
+        win = CopilotWindow(service=service)
+        win._on_service_error(service, "copilot CLI not found")
+        assert win._content_stack.get_visible_child_name() == "error"
+
+    def test_fatal_error_disables_new_chat(self):
+        service = _make_mock_service()
+        win = CopilotWindow(service=service)
+        win._on_service_ready(service)
+        win._on_service_error(service, "No such file or directory")
+        assert not win._new_chat_action.get_enabled()
+
+    def test_transient_error_shows_toast(self):
+        service = _make_mock_service()
+        win = CopilotWindow(service=service)
+        # Transient errors should not switch to error page
+        win._on_service_error(service, "Network timeout")
+        assert win._content_stack.get_visible_child_name() != "error"
+
+    # ---- Close conversation (TASK-051: Ctrl+W) ----
+
+    def test_close_conversation_action_registered(self):
+        service = _make_mock_service()
+        win = CopilotWindow(service=service)
+        assert win.lookup_action("close-conversation") is not None
+
+    def test_close_conversation_returns_to_empty(self):
+        service = _make_mock_service()
+        win = CopilotWindow(service=service)
+        win._on_service_ready(service)
+
+        conv = Conversation(session_id="s1", title="Test Chat")
+        service._conversations["s1"] = conv
+        win._on_session_idle(service, "s1")
+        assert win._content_stack.get_visible_child_name() == "chat"
+
+        win._on_close_conversation_action(None, None)
+        assert win._current_session_id is None
+        assert win._content_stack.get_visible_child_name() == "empty"
+
+    # ---- Escape action ----
+
+    def test_escape_action_registered(self):
+        service = _make_mock_service()
+        win = CopilotWindow(service=service)
+        assert win.lookup_action("escape-pressed") is not None
+
+    def test_escape_closes_search_bar(self):
+        service = _make_mock_service()
+        win = CopilotWindow(service=service)
+        win._search_button.set_active(True)
+        assert win._search_button.get_active()
+        win._on_escape_action(None, None)
+        assert not win._search_button.get_active()
+
+    # ---- Help overlay action ----
+
+    def test_help_overlay_action_registered(self):
+        service = _make_mock_service()
+        win = CopilotWindow(service=service)
+        assert win.lookup_action("show-help-overlay") is not None
+
+    def test_shortcuts_window_exists(self):
+        service = _make_mock_service()
+        win = CopilotWindow(service=service)
+        assert win._shortcuts_window is not None
+        assert isinstance(win._shortcuts_window, Gtk.ShortcutsWindow)

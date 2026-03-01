@@ -73,6 +73,9 @@ class ChatInput(Gtk.Box):
         self._text_view.set_left_margin(12)
         self._text_view.set_right_margin(12)
         self._text_view.add_css_class("chat-text-input")
+        self._text_view.update_property(
+            [Gtk.AccessibleProperty.LABEL], ["Message input"],
+        )
 
         # Placeholder text
         self._placeholder = Gtk.Label(
@@ -104,6 +107,9 @@ class ChatInput(Gtk.Box):
         self._send_button.add_css_class("suggested-action")
         self._send_button.set_valign(Gtk.Align.END)
         self._send_button.connect("clicked", self._on_send_clicked)
+        self._send_button.update_property(
+            [Gtk.AccessibleProperty.LABEL], ["Send message"],
+        )
         self.append(self._send_button)
 
         # Key controller for Ctrl+Enter
@@ -127,12 +133,18 @@ class ChatInput(Gtk.Box):
             self._send_button.set_tooltip_text("Stop generation")
             self._send_button.remove_css_class("suggested-action")
             self._send_button.add_css_class("destructive-action")
+            self._send_button.update_property(
+                [Gtk.AccessibleProperty.LABEL], ["Stop generation"],
+            )
             self._text_view.set_sensitive(False)
         else:
             self._send_button.set_icon_name("go-up-symbolic")
             self._send_button.set_tooltip_text("Send (Ctrl+Enter)")
             self._send_button.remove_css_class("destructive-action")
             self._send_button.add_css_class("suggested-action")
+            self._send_button.update_property(
+                [Gtk.AccessibleProperty.LABEL], ["Send message"],
+            )
             self._text_view.set_sensitive(True)
 
     def grab_focus_input(self) -> None:
