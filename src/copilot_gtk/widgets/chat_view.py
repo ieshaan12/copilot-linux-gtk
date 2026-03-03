@@ -102,10 +102,28 @@ class ChatView(Gtk.Box):
                 self._scroll_to_bottom()
 
     def finish_streaming(self) -> None:
-        """Mark the streaming bubble as complete."""
+        """Mark the streaming bubble as complete.
+
+        If the bubble has no content (empty response), an informational
+        message is shown so the user isn't left staring at a blank box.
+        """
         if self._streaming_bubble is not None:
-            self._streaming_bubble.finish_streaming()
+            if not self._streaming_bubble.content.strip():
+                self._streaming_bubble.show_error("No response received. Please try again.")
+            else:
+                self._streaming_bubble.finish_streaming()
             self._streaming_bubble = None
+
+    def show_streaming_error(self, message: str) -> None:
+        """Show an error message in the current streaming bubble.
+
+        If there is no active streaming bubble, one is created first.
+        """
+        if self._streaming_bubble is None:
+            self.add_assistant_placeholder()
+        self._streaming_bubble.show_error(message)  # type: ignore[union-attr]
+        self._streaming_bubble = None
+        self._scroll_to_bottom()
 
     def clear(self) -> None:
         """Remove all message bubbles."""

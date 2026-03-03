@@ -372,6 +372,9 @@ class CopilotWindow(Adw.ApplicationWindow):
         if any(kw in message.lower() for kw in fatal_keywords):
             self._show_fatal_error(message)
         else:
+            # Show error inline in the streaming bubble so the user
+            # sees feedback right where they expect the response.
+            self._chat_view.show_streaming_error(message)
             toast = Adw.Toast(title=message, timeout=5)
             self._toast_overlay.add_toast(toast)
         self._chat_input.set_loading(False)
