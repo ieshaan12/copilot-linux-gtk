@@ -199,7 +199,7 @@ class CopilotWindow(Adw.ApplicationWindow):
         loading_page = Adw.StatusPage()
         loading_page.set_title("Starting Copilot…")
         loading_page.set_description("Initializing the Copilot SDK")
-        loading_spinner = Adw.Spinner()
+        loading_spinner = Adw.Spinner() if hasattr(Adw, "Spinner") else Gtk.Spinner(spinning=True)
         loading_spinner.set_halign(Gtk.Align.CENTER)
         loading_spinner.set_size_request(32, 32)
         loading_page.set_child(loading_spinner)

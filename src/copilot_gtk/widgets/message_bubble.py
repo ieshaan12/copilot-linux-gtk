@@ -18,6 +18,13 @@ if TYPE_CHECKING:
 from .markdown_renderer import MarkdownTextView  # noqa: E402
 
 
+def _create_spinner() -> Gtk.Widget:
+    """Create a spinner, falling back to Gtk.Spinner on older libadwaita."""
+    if hasattr(Adw, "Spinner"):
+        return Adw.Spinner()
+    return Gtk.Spinner(spinning=True)
+
+
 class MessageBubble(Gtk.Box):
     """Renders a single message with role-appropriate styling.
 
@@ -107,7 +114,7 @@ class MessageBubble(Gtk.Box):
             content_box.append(self._markdown_view)
 
         # Spinner for streaming
-        self._spinner = Adw.Spinner()
+        self._spinner = _create_spinner()
         self._spinner.set_visible(is_streaming and not content)
         content_box.append(self._spinner)
 
