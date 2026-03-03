@@ -7,15 +7,22 @@ from typing import TYPE_CHECKING
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from gi.repository import Adw, Gtk, Pango  # noqa: E402
 
 if TYPE_CHECKING:
-    from ..backend import MessageRole
+    pass
 
 from .markdown_renderer import MarkdownTextView  # noqa: E402
+
+
+def _create_spinner() -> Gtk.Widget:
+    """Create a spinner, falling back to Gtk.Spinner on older libadwaita."""
+    if hasattr(Adw, "Spinner"):
+        return Adw.Spinner()
+    return Gtk.Spinner(spinning=True)
 
 
 class MessageBubble(Gtk.Box):
@@ -94,9 +101,7 @@ class MessageBubble(Gtk.Box):
                 use_markup=False,
                 max_width_chars=60,
             )
-            self._text_label.set_natural_wrap_mode(
-                Gtk.NaturalWrapMode.WORD
-            )
+            self._text_label.set_natural_wrap_mode(Gtk.NaturalWrapMode.WORD)
             self._text_label.add_css_class("body")
             content_box.append(self._text_label)
         else:
@@ -109,7 +114,7 @@ class MessageBubble(Gtk.Box):
             content_box.append(self._markdown_view)
 
         # Spinner for streaming
-        self._spinner = Adw.Spinner()
+        self._spinner = _create_spinner()
         self._spinner.set_visible(is_streaming and not content)
         content_box.append(self._spinner)
 

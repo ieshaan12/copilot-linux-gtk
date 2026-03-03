@@ -49,9 +49,7 @@ class TestConversationSidebar:
         window = app_node.child(roleName="frame")
 
         try:
-            items = window.find_children(
-                lambda n: n.roleName in ("list item", "table cell", "row")
-            )
+            items = window.find_children(lambda n: n.roleName in ("list item", "table cell", "row"))
             if len(items) >= 2:
                 items[0].click()
                 time.sleep(0.5)

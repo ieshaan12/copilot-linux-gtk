@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Unit tests for the Message data model."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from copilot_gtk.backend.message import Message, MessageRole
 
@@ -15,24 +15,18 @@ class TestMessage:
         assert msg.message_id is None
 
     def test_create_streaming_assistant_message(self) -> None:
-        msg = Message(
-            role=MessageRole.ASSISTANT, content="", is_streaming=True
-        )
+        msg = Message(role=MessageRole.ASSISTANT, content="", is_streaming=True)
         assert msg.is_streaming is True
         assert msg.content == ""
 
     def test_append_content(self) -> None:
-        msg = Message(
-            role=MessageRole.ASSISTANT, content="Hello", is_streaming=True
-        )
+        msg = Message(role=MessageRole.ASSISTANT, content="Hello", is_streaming=True)
         msg.append_content(" world")
         assert msg.content == "Hello world"
         assert msg.is_streaming is True
 
     def test_finish_streaming(self) -> None:
-        msg = Message(
-            role=MessageRole.ASSISTANT, content="Done", is_streaming=True
-        )
+        msg = Message(role=MessageRole.ASSISTANT, content="Done", is_streaming=True)
         msg.finish_streaming()
         assert msg.is_streaming is False
 
@@ -40,7 +34,7 @@ class TestMessage:
         original = Message(
             role=MessageRole.ASSISTANT,
             content="test content",
-            timestamp=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            timestamp=datetime(2026, 1, 1, tzinfo=UTC),
             message_id="msg-123",
             turn_id="turn-456",
         )
@@ -55,9 +49,7 @@ class TestMessage:
         assert restored.is_streaming is False  # Never persisted as streaming
 
     def test_to_dict_excludes_is_streaming(self) -> None:
-        msg = Message(
-            role=MessageRole.USER, content="hi", is_streaming=True
-        )
+        msg = Message(role=MessageRole.USER, content="hi", is_streaming=True)
         d = msg.to_dict()
         assert "is_streaming" not in d
 

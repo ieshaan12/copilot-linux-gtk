@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from .conftest import VALID_APP_NAMES, find_by_role_and_name, wait_for_sdk_ready
+from .conftest import VALID_APP_NAMES, find_by_role_and_name
 
 pytestmark = [
     pytest.mark.ui,
@@ -25,9 +25,7 @@ class TestAppLaunch:
         assert app_node is not None
         name = getattr(app_node, "name", "") or ""
         # The app registers as "main.py" when launched via python -m
-        assert any(
-            n in name.lower() for n in VALID_APP_NAMES
-        ), f"Unexpected app name: {name!r}"
+        assert any(n in name.lower() for n in VALID_APP_NAMES), f"Unexpected app name: {name!r}"
 
     def test_main_window_present(self, app_node):
         """The main window frame should be present."""
@@ -49,10 +47,12 @@ class TestAppLaunch:
             return
         # Look for Conversations grouping (sidebar)
         from .conftest import safe_find
+
         grp = safe_find(
             window,
-            lambda n: n.roleName == "grouping"
-            and "Conversations" in (getattr(n, "name", "") or ""),
+            lambda n: (
+                n.roleName == "grouping" and "Conversations" in (getattr(n, "name", "") or "")
+            ),
         )
         if grp is not None:
             return

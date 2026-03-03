@@ -2,7 +2,6 @@
 """Tests for accessibility labels (Phase 7 — TASK-054)."""
 
 import gi
-import pytest
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
@@ -12,8 +11,8 @@ from gi.repository import Adw, Gtk  # noqa: E402
 Adw.init()
 
 from copilot_gtk.widgets.chat_input import ChatInput  # noqa: E402
-from copilot_gtk.widgets.message_bubble import MessageBubble  # noqa: E402
 from copilot_gtk.widgets.conversation_row import ConversationRow  # noqa: E402
+from copilot_gtk.widgets.message_bubble import MessageBubble  # noqa: E402
 
 
 def _get_accessible_label(widget: Gtk.Widget) -> str:

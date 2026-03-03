@@ -9,17 +9,17 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 gi.require_version("GtkSource", "5")
 
-from gi.repository import Adw, Gdk, Gtk, GtkSource, Pango  # noqa: E402
+from gi.repository import Adw, Pango  # noqa: E402
 
 Adw.init()
 
-from copilot_gtk.widgets.markdown_renderer import MarkdownTextView  # noqa: E402
 from copilot_gtk.widgets.code_block import CodeBlock  # noqa: E402
-
+from copilot_gtk.widgets.markdown_renderer import MarkdownTextView  # noqa: E402
 
 # ======================================================================
 # Helper utilities
 # ======================================================================
+
 
 def _get_text(view: MarkdownTextView) -> str:
     """Extract all visible text from a MarkdownTextView's buffer."""
@@ -81,8 +81,8 @@ def _get_tagged_text(view: MarkdownTextView, tag_name: str) -> str:
 # VER-P4-001: Heading renders large
 # ======================================================================
 
-class TestHeadingRendering:
 
+class TestHeadingRendering:
     def test_h1_renders_with_large_scale(self):
         view = MarkdownTextView()
         view.set_markdown("# Hello")
@@ -119,8 +119,8 @@ class TestHeadingRendering:
 # VER-P4-002: Bold renders bold
 # ======================================================================
 
-class TestBoldRendering:
 
+class TestBoldRendering:
     def test_bold_text_has_bold_tag(self):
         view = MarkdownTextView()
         view.set_markdown("This is **bold** text")
@@ -143,8 +143,8 @@ class TestBoldRendering:
 # VER-P4-003: Inline code uses monospace
 # ======================================================================
 
-class TestInlineCode:
 
+class TestInlineCode:
     def test_inline_code_has_tag(self):
         view = MarkdownTextView()
         view.set_markdown("Use `code` here")
@@ -167,8 +167,8 @@ class TestInlineCode:
 # VER-P4-004: Fenced code block renders
 # ======================================================================
 
-class TestCodeBlock:
 
+class TestCodeBlock:
     def test_code_block_created(self):
         view = MarkdownTextView()
         view.set_markdown('```python\nprint("hi")\n```')
@@ -194,9 +194,7 @@ class TestCodeBlock:
 
     def test_multiple_code_blocks(self):
         view = MarkdownTextView()
-        view.set_markdown(
-            "```python\na = 1\n```\n\nSome text\n\n```bash\necho hi\n```"
-        )
+        view.set_markdown("```python\na = 1\n```\n\nSome text\n\n```bash\necho hi\n```")
         assert len(view.code_blocks) == 2
         assert view.code_blocks[0].language == "python"
         assert view.code_blocks[1].language == "bash"
@@ -206,8 +204,8 @@ class TestCodeBlock:
 # VER-P4-005: Code copy button works
 # ======================================================================
 
-class TestCodeCopyButton:
 
+class TestCodeCopyButton:
     def test_code_block_widget_structure(self):
         cb = CodeBlock(code="hello", language="python")
         assert cb.code == "hello"
@@ -229,8 +227,8 @@ class TestCodeCopyButton:
 # VER-P4-006: Nested list indentation
 # ======================================================================
 
-class TestListRendering:
 
+class TestListRendering:
     def test_unordered_list(self):
         view = MarkdownTextView()
         view.set_markdown("- Alpha\n- Beta\n- Gamma")
@@ -271,8 +269,8 @@ class TestListRendering:
 # VER-P4-007: Links are styled
 # ======================================================================
 
-class TestLinkRendering:
 
+class TestLinkRendering:
     def test_link_has_tag(self):
         view = MarkdownTextView()
         view.set_markdown("[Example](https://example.com)")
@@ -295,8 +293,8 @@ class TestLinkRendering:
 # VER-P4-008: Markdown unit tests
 # ======================================================================
 
-class TestItalicRendering:
 
+class TestItalicRendering:
     def test_italic_text(self):
         view = MarkdownTextView()
         view.set_markdown("This is *italic* text")
@@ -310,7 +308,6 @@ class TestItalicRendering:
 
 
 class TestBlockquote:
-
     def test_blockquote_renders(self):
         view = MarkdownTextView()
         view.set_markdown("> This is a quote")
@@ -324,7 +321,6 @@ class TestBlockquote:
 
 
 class TestThematicBreak:
-
     def test_hr_renders(self):
         view = MarkdownTextView()
         view.set_markdown("Above\n\n---\n\nBelow")
@@ -333,7 +329,6 @@ class TestThematicBreak:
 
 
 class TestStreamingDelta:
-
     def test_append_delta(self):
         view = MarkdownTextView()
         view.append_markdown_delta("Hello ")
@@ -396,10 +391,11 @@ class TestComplexMarkdown:
 # MessageBubble integration (VER-P4 cross-check)
 # ======================================================================
 
-class TestMessageBubbleMarkdown:
 
+class TestMessageBubbleMarkdown:
     def test_user_bubble_plain_text(self):
         from copilot_gtk.widgets.message_bubble import MessageBubble
+
         bubble = MessageBubble(role="user", content="Hello!")
         assert bubble.content == "Hello!"
         # User bubbles should NOT have markdown view
@@ -408,6 +404,7 @@ class TestMessageBubbleMarkdown:
 
     def test_assistant_bubble_uses_markdown(self):
         from copilot_gtk.widgets.message_bubble import MessageBubble
+
         bubble = MessageBubble(role="assistant", content="**bold** text")
         assert bubble._markdown_view is not None
         assert bubble._text_label is None
@@ -415,6 +412,7 @@ class TestMessageBubbleMarkdown:
 
     def test_assistant_bubble_append_content(self):
         from copilot_gtk.widgets.message_bubble import MessageBubble
+
         bubble = MessageBubble(role="assistant", content="", is_streaming=True)
         bubble.append_content("Hello ")
         bubble.append_content("**world**")
@@ -422,12 +420,14 @@ class TestMessageBubbleMarkdown:
 
     def test_assistant_bubble_set_content(self):
         from copilot_gtk.widgets.message_bubble import MessageBubble
+
         bubble = MessageBubble(role="assistant", content="old")
         bubble.set_content("# New heading")
         assert "# New heading" in bubble.content
 
     def test_user_bubble_append_still_works(self):
         from copilot_gtk.widgets.message_bubble import MessageBubble
+
         bubble = MessageBubble(role="user", content="Hi")
         bubble.append_content(" there")
         assert bubble.content == "Hi there"

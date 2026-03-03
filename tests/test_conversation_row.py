@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Tests for ConversationRow widget."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from gi.repository import Adw, Gtk  # noqa: E402
 
@@ -47,13 +47,13 @@ class TestConversationRow:
         assert received == ["s1"]
 
     def test_today_timestamp_format(self):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         row = ConversationRow(session_id="s1", updated_at=now)
         # Should show HH:MM
         assert ":" in row._time_label.get_label()
 
     def test_yesterday_timestamp_format(self):
-        yesterday = datetime.now(timezone.utc) - timedelta(days=1)
+        yesterday = datetime.now(UTC) - timedelta(days=1)
         row = ConversationRow(session_id="s1", updated_at=yesterday)
         assert row._time_label.get_label() == "Yesterday"
 

@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from .message import Message
 
@@ -26,13 +26,13 @@ class Conversation:
     title: str = "New Chat"
     model: str = ""
     messages: list[Message] = field(default_factory=list)
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def add_message(self, message: Message) -> None:
         """Add a message and update the timestamp."""
         self.messages.append(message)
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
     def get_last_assistant_message(self) -> Message | None:
         """Get the most recent assistant message, if any."""

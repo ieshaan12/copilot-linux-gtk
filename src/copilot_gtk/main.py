@@ -5,11 +5,12 @@ import logging
 import os
 import sys
 from pathlib import Path
+from typing import Any
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from gi.repository import Adw, Gdk, Gio, Gtk  # noqa: E402
 
@@ -17,9 +18,8 @@ from .backend import install_async_bridge  # noqa: E402
 from .backend.auth_manager import AuthManager  # noqa: E402
 from .backend.conversation_store import ConversationStore  # noqa: E402
 from .backend.mock_copilot_service import create_service  # noqa: E402
-from .window import CopilotWindow  # noqa: E402
-from .widgets.auth_dialog import AuthDialog  # noqa: E402
 from .widgets.preferences_dialog import PreferencesDialog  # noqa: E402
+from .window import CopilotWindow  # noqa: E402
 
 log = logging.getLogger(__name__)
 
@@ -31,9 +31,9 @@ class CopilotGTKApplication(Adw.Application):
         # In test mode, use a separate D-Bus name so the test instance doesn't
         # conflict with a normally-running app, while still registering on the
         # session bus (needed for gdbus GAction activation in UI tests).
-        app_id = 'io.github.ieshaan.CopilotGTK'
+        app_id = "io.github.ieshaan.CopilotGTK"
         if os.environ.get("COPILOT_GTK_TEST_MODE") == "1":
-            app_id = 'io.github.ieshaan.CopilotGTK.Test'
+            app_id = "io.github.ieshaan.CopilotGTK.Test"
 
         super().__init__(
             application_id=app_id,
@@ -59,10 +59,8 @@ class CopilotGTKApplication(Adw.Application):
             Gio.SettingsSchemaSource.get_default(),
             False,
         )
-        schema = schema_source.lookup(
-            "io.github.ieshaan.CopilotGTK", False
-        )
-        self._settings = Gio.Settings.new_full(schema, None, None)
+        schema = schema_source.lookup("io.github.ieshaan.CopilotGTK", False)
+        self._settings = Gio.Settings.new_full(schema, None, None)  # type: ignore[arg-type]
 
         # Detect auth method
         self._auth_manager.detect()
@@ -75,7 +73,7 @@ class CopilotGTKApplication(Adw.Application):
         win = self.props.active_window
         if not win:
             win = CopilotWindow(
-                service=self._service,
+                service=self._service,  # type: ignore[arg-type]
                 auth_manager=self._auth_manager,
                 settings=self._settings,
                 store=self._store,
@@ -95,7 +93,7 @@ class CopilotGTKApplication(Adw.Application):
             if cli_path:
                 auth_opts["cli_path"] = cli_path
 
-            self._service.start(client_options=auth_opts)
+            self._service.start(client_options=auth_opts)  # type: ignore[attr-defined]
 
         win.present()
 
@@ -110,7 +108,7 @@ class CopilotGTKApplication(Adw.Application):
             provider = Gtk.CssProvider()
             provider.load_from_path(str(css_path))
             Gtk.StyleContext.add_provider_for_display(
-                Gdk.Display.get_default(),
+                Gdk.Display.get_default(),  # type: ignore[arg-type]
                 provider,
                 Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
             )
@@ -144,7 +142,7 @@ class CopilotGTKApplication(Adw.Application):
     # Action handlers
     # ------------------------------------------------------------------
 
-    def _on_about(self, _action, _param) -> None:
+    def _on_about(self, _action: Any, _param: Any) -> None:
         about = Adw.AboutDialog(
             application_name="Copilot for GNOME",
             application_icon="io.github.ieshaan.CopilotGTK",
@@ -158,29 +156,29 @@ class CopilotGTKApplication(Adw.Application):
         )
         about.present(self._window)
 
-    def _on_preferences(self, _action, _param) -> None:
+    def _on_preferences(self, _action: Any, _param: Any) -> None:
         if self._window and self._settings:
             dialog = PreferencesDialog(
                 settings=self._settings,
                 auth_manager=self._auth_manager,
-                service=self._service,
+                service=self._service,  # type: ignore[arg-type]
             )
             dialog.present(self._window)
 
-    def _on_quit(self, _action, _param) -> None:
-        self._service.stop()
+    def _on_quit(self, _action: Any, _param: Any) -> None:
+        self._service.stop()  # type: ignore[attr-defined]
         self.quit()
 
     # ------------------------------------------------------------------
     # Service callbacks
     # ------------------------------------------------------------------
 
-    def _on_service_ready(self, _service) -> None:
+    def _on_service_ready(self, _service: Any) -> None:
         log.info("Copilot SDK is ready")
         # Pre-fetch available models
-        self._service.list_models()
+        self._service.list_models()  # type: ignore[attr-defined]
 
-    def _on_service_error(self, _service, message: str) -> None:
+    def _on_service_error(self, _service: Any, message: str) -> None:
         log.error("Copilot SDK error: %s", message)
 
 
@@ -197,6 +195,7 @@ def main() -> int:
     install_async_bridge()
 
     import asyncio
+
     loop = asyncio.get_event_loop()
 
     app = CopilotGTKApplication()
@@ -204,9 +203,9 @@ def main() -> int:
     # Use gbulb's run_forever(application=...) so the asyncio loop
     # is properly marked as "running" — copilot-sdk requires
     # asyncio.get_running_loop() to succeed.
-    loop.run_forever(application=app, argv=sys.argv)
+    loop.run_forever(application=app, argv=sys.argv)  # type: ignore[call-arg]
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

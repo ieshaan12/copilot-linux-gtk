@@ -2,7 +2,6 @@
 """Tests for the keyboard shortcuts window (Phase 7 — TASK-052)."""
 
 import gi
-import pytest
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
@@ -12,8 +11,8 @@ from gi.repository import Adw, Gtk  # noqa: E402
 Adw.init()
 
 from copilot_gtk.widgets.shortcuts_window import (  # noqa: E402
-    build_shortcuts_window,
     _new_shortcut,
+    build_shortcuts_window,
 )
 
 

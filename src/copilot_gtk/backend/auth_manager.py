@@ -21,7 +21,7 @@ from typing import Any
 import gi
 
 gi.require_version("GLib", "2.0")
-from gi.repository import GLib, GObject  # noqa: E402
+from gi.repository import GObject  # noqa: E402
 
 log = logging.getLogger(__name__)
 
@@ -127,9 +127,7 @@ class AuthManager(GObject.Object):
             return self._method
 
         # 2) Environment variable
-        env_token = os.environ.get("GITHUB_TOKEN") or os.environ.get(
-            "GH_TOKEN"
-        )
+        env_token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
         if env_token:
             self._token = env_token
             self._method = AuthMethod.TOKEN_ENV
@@ -154,10 +152,13 @@ class AuthManager(GObject.Object):
         """
         opts: dict[str, Any] = {}
 
-        if self._method == AuthMethod.TOKEN_KEYRING and self._token:
-            opts["github_token"] = self._token
-            opts["use_logged_in_user"] = False
-        elif self._method == AuthMethod.TOKEN_ENV and self._token:
+        has_token = (
+            self._method == AuthMethod.TOKEN_KEYRING
+            and self._token
+            or self._method == AuthMethod.TOKEN_ENV
+            and self._token
+        )
+        if has_token:
             opts["github_token"] = self._token
             opts["use_logged_in_user"] = False
         else:
@@ -250,9 +251,7 @@ class AuthManager(GObject.Object):
     @staticmethod
     def has_env_token() -> bool:
         """Check whether a GitHub token is set via environment variables."""
-        return bool(
-            os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
-        )
+        return bool(os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN"))
 
     @staticmethod
     def get_env_token_name() -> str | None:

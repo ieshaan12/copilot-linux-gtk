@@ -7,6 +7,7 @@ type in the input area, and the app handles send without crashing.
 
 from __future__ import annotations
 
+import contextlib
 import time
 
 import pytest
@@ -53,14 +54,13 @@ class TestSendMessage:
 
         window = app_node.child(roleName="frame")
         from .conftest import find_by_role_and_name
+
         btn = find_by_role_and_name(window, "button", "Send")
         if btn is not None:
             return
         # Fallback: check any buttons exist
         try:
-            buttons = window.find_children(
-                lambda n: n.roleName in ("push button", "button")
-            )
+            buttons = window.find_children(lambda n: n.roleName in ("push button", "button"))
             assert len(buttons) > 0, "No buttons found in chat view"
         except Exception:
             assert window.child_count > 0
@@ -86,12 +86,11 @@ class TestSendMessage:
         # Try to find and click send
         window = app_node.child(roleName="frame")
         from .conftest import find_by_role_and_name
+
         send_btn = find_by_role_and_name(window, "button", "Send")
         if send_btn:
-            try:
+            with contextlib.suppress(Exception):
                 send_btn.click()
-            except Exception:
-                pass
 
         time.sleep(3)
         assert window.showing, "App crashed after sending message"

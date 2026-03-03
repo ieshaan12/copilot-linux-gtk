@@ -3,14 +3,15 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Any
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
-from gi.repository import Adw, GObject, Gtk  # noqa: E402
+from gi.repository import GObject, Gtk  # noqa: E402
 
 
 class ConversationRow(Gtk.ListBoxRow):
@@ -50,7 +51,8 @@ class ConversationRow(Gtk.ListBoxRow):
 
         self.add_css_class("conversation-row")
         self.update_property(
-            [Gtk.AccessibleProperty.LABEL], [f"Conversation: {title}"],
+            [Gtk.AccessibleProperty.LABEL],
+            [f"Conversation: {title}"],
         )
 
         # Main box
@@ -74,13 +76,13 @@ class ConversationRow(Gtk.ListBoxRow):
         self._title_label = Gtk.Label(
             label=title,
             xalign=0,
-            ellipsize=3,  # PANGO_ELLIPSIZE_END
+            ellipsize=3,  # type: ignore[arg-type]  # PANGO_ELLIPSIZE_END
             hexpand=True,
         )
         self._title_label.add_css_class("heading")
         top_box.append(self._title_label)
 
-        ts = updated_at or datetime.now(timezone.utc)
+        ts = updated_at or datetime.now(UTC)
         self._time_label = Gtk.Label(
             label=self._format_time(ts),
             xalign=1,
@@ -121,7 +123,8 @@ class ConversationRow(Gtk.ListBoxRow):
     def title(self, value: str) -> None:
         self._title_label.set_label(value)
         self.update_property(
-            [Gtk.AccessibleProperty.LABEL], [f"Conversation: {value}"],
+            [Gtk.AccessibleProperty.LABEL],
+            [f"Conversation: {value}"],
         )
 
     # ------------------------------------------------------------------
@@ -163,10 +166,10 @@ class ConversationRow(Gtk.ListBoxRow):
 
         self._popover = popover
 
-    def _on_delete(self, _action, _param) -> None:
+    def _on_delete(self, _action: Any, _param: Any) -> None:
         self.emit("delete-requested", self._session_id)
 
-    def _on_rename(self, _action, _param) -> None:
+    def _on_rename(self, _action: Any, _param: Any) -> None:
         self.emit("rename-requested", self._session_id)
 
     # ------------------------------------------------------------------
@@ -176,7 +179,7 @@ class ConversationRow(Gtk.ListBoxRow):
     @staticmethod
     def _format_time(dt: datetime) -> str:
         """Format a datetime as a short relative/absolute string."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         diff = now - dt
         if diff.days == 0:
             return dt.strftime("%H:%M")

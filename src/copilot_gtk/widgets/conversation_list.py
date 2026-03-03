@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from gi.repository import GObject, Gtk  # noqa: E402
 
@@ -123,20 +123,14 @@ class ConversationList(Gtk.Box):
     # Internal signal handlers
     # ------------------------------------------------------------------
 
-    def _on_row_selected(
-        self, _list_box: Gtk.ListBox, row: Gtk.ListBoxRow | None
-    ) -> None:
+    def _on_row_selected(self, _list_box: Gtk.ListBox, row: Gtk.ListBoxRow | None) -> None:
         if isinstance(row, ConversationRow):
             self.emit("conversation-selected", row.session_id)
 
-    def _on_row_delete_requested(
-        self, row: ConversationRow, session_id: str
-    ) -> None:
+    def _on_row_delete_requested(self, row: ConversationRow, session_id: str) -> None:
         self.emit("conversation-delete-requested", session_id)
 
-    def _on_row_rename_requested(
-        self, row: ConversationRow, session_id: str
-    ) -> None:
+    def _on_row_rename_requested(self, row: ConversationRow, session_id: str) -> None:
         self.emit("conversation-rename-requested", session_id)
 
     # ------------------------------------------------------------------
@@ -149,7 +143,7 @@ class ConversationList(Gtk.Box):
         If *query* is empty, all rows are shown.
         """
         q = query.strip().lower()
-        for sid, row in self._rows.items():
+        for _sid, row in self._rows.items():
             if not q:
                 row.set_visible(True)
             else:

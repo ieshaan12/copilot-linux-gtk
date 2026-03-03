@@ -9,7 +9,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 gi.require_version("GtkSource", "5")
 
-from gi.repository import Adw, Gdk, GLib, GObject, Gtk, GtkSource, Pango  # noqa: E402
+from gi.repository import Adw, Gdk, GLib, Gtk, GtkSource  # noqa: E402
 
 
 class CodeBlock(Gtk.Box):
@@ -140,7 +140,7 @@ class CodeBlock(Gtk.Box):
 
     def _on_copy_clicked(self, _btn: Gtk.Button) -> None:
         """Copy the code block text to clipboard."""
-        clipboard = Gdk.Display.get_default().get_clipboard()
+        clipboard = Gdk.Display.get_default().get_clipboard()  # type: ignore[union-attr]
         clipboard.set(self._code)
 
         # Visual feedback

@@ -28,7 +28,8 @@ def _set_color_scheme(prefer_dark: bool) -> bool:
     try:
         subprocess.run(
             [
-                "gsettings", "set",
+                "gsettings",
+                "set",
                 "org.gnome.desktop.interface",
                 "color-scheme",
                 value,
@@ -47,7 +48,8 @@ def _get_color_scheme() -> str | None:
     try:
         result = subprocess.run(
             [
-                "gsettings", "get",
+                "gsettings",
+                "get",
                 "org.gnome.desktop.interface",
                 "color-scheme",
             ],

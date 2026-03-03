@@ -2,7 +2,7 @@
 """Tests for ConversationStore — persistence layer."""
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -27,8 +27,8 @@ def _make_conv(
         session_id=session_id,
         title=title,
         model=model,
-        created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
-        updated_at=datetime(2026, 1, 2, tzinfo=timezone.utc),
+        created_at=datetime(2026, 1, 1, tzinfo=UTC),
+        updated_at=datetime(2026, 1, 2, tzinfo=UTC),
     )
 
 
@@ -61,9 +61,9 @@ class TestConversationStore:
 
     def test_save_multiple_sorted_by_updated(self, tmp_store: ConversationStore) -> None:
         c1 = _make_conv("s1", "First")
-        c1.updated_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        c1.updated_at = datetime(2026, 1, 1, tzinfo=UTC)
         c2 = _make_conv("s2", "Second")
-        c2.updated_at = datetime(2026, 1, 3, tzinfo=timezone.utc)
+        c2.updated_at = datetime(2026, 1, 3, tzinfo=UTC)
 
         tmp_store.save_conversation(c1)
         tmp_store.save_conversation(c2)
@@ -183,7 +183,7 @@ class TestConversationStoreDisk:
 
     def test_directories_created(self, tmp_path: Path) -> None:
         data_dir = tmp_path / "subdir" / "nested"
-        store = ConversationStore(data_dir=data_dir)
+        _ = ConversationStore(data_dir=data_dir)
         assert data_dir.exists()
         assert (data_dir / "messages").exists()
 

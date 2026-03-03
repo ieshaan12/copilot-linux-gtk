@@ -4,12 +4,12 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from gi.repository import Adw, Gio, GLib, GObject, Gtk  # noqa: E402
 
@@ -43,7 +43,7 @@ class CopilotWindow(Adw.ApplicationWindow):
         auth_manager: AuthManager | None = None,
         settings: Gio.Settings | None = None,
         store: ConversationStore | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
         self._service = service
@@ -102,7 +102,8 @@ class CopilotWindow(Adw.ApplicationWindow):
         new_chat_btn.add_css_class("flat")
         new_chat_btn.set_action_name("win.new-chat")
         new_chat_btn.update_property(
-            [Gtk.AccessibleProperty.LABEL], ["New Chat"],
+            [Gtk.AccessibleProperty.LABEL],
+            ["New Chat"],
         )
         sidebar_header.pack_start(new_chat_btn)
 
@@ -111,7 +112,8 @@ class CopilotWindow(Adw.ApplicationWindow):
         self._search_button.set_tooltip_text("Search Conversations (Ctrl+K)")
         self._search_button.add_css_class("flat")
         self._search_button.update_property(
-            [Gtk.AccessibleProperty.LABEL], ["Search Conversations"],
+            [Gtk.AccessibleProperty.LABEL],
+            ["Search Conversations"],
         )
         sidebar_header.pack_end(self._search_button)
 
@@ -136,9 +138,7 @@ class CopilotWindow(Adw.ApplicationWindow):
 
         # Conversation list
         self._conversation_list = ConversationList()
-        self._conversation_list.connect(
-            "conversation-selected", self._on_conversation_selected
-        )
+        self._conversation_list.connect("conversation-selected", self._on_conversation_selected)
         self._conversation_list.connect(
             "conversation-delete-requested", self._on_conversation_delete_requested
         )
@@ -168,7 +168,8 @@ class CopilotWindow(Adw.ApplicationWindow):
         menu_btn.add_css_class("flat")
         menu_btn.set_menu_model(self._build_menu_model())
         menu_btn.update_property(
-            [Gtk.AccessibleProperty.LABEL], ["Main Menu"],
+            [Gtk.AccessibleProperty.LABEL],
+            ["Main Menu"],
         )
         content_header.pack_end(menu_btn)
 
@@ -176,9 +177,7 @@ class CopilotWindow(Adw.ApplicationWindow):
 
         # Stack: empty state vs chat
         self._content_stack = Gtk.Stack()
-        self._content_stack.set_transition_type(
-            Gtk.StackTransitionType.CROSSFADE
-        )
+        self._content_stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
         content_toolbar.set_content(self._content_stack)
 
         # Empty state
@@ -200,7 +199,7 @@ class CopilotWindow(Adw.ApplicationWindow):
         loading_page = Adw.StatusPage()
         loading_page.set_title("Starting Copilot…")
         loading_page.set_description("Initializing the Copilot SDK")
-        loading_spinner = Adw.Spinner()
+        loading_spinner = Adw.Spinner() if hasattr(Adw, "Spinner") else Gtk.Spinner(spinning=True)
         loading_spinner.set_halign(Gtk.Align.CENTER)
         loading_spinner.set_size_request(32, 32)
         loading_page.set_child(loading_spinner)
@@ -282,16 +281,15 @@ class CopilotWindow(Adw.ApplicationWindow):
         self._service.connect("response-chunk", self._on_response_chunk)
         self._service.connect("response-complete", self._on_response_complete)
         self._service.connect("session-idle", self._on_session_idle)
-        self._service.connect(
-            "session-title-changed", self._on_session_title_changed
-        )
+        self._service.connect("session-title-changed", self._on_session_title_changed)
         self._service.connect("turn-start", self._on_turn_start)
         self._service.connect("turn-end", self._on_turn_end)
         self._service.connect("error", self._on_service_error)
         self._service.connect("models-loaded", self._on_models_loaded)
 
     def _on_service_ready(
-        self, _service: CopilotService,
+        self,
+        _service: CopilotService,
     ) -> None:
         """Enable the New Chat button as soon as the SDK is ready."""
         self._new_chat_action.set_enabled(True)
@@ -299,9 +297,7 @@ class CopilotWindow(Adw.ApplicationWindow):
         if self._content_stack.get_visible_child_name() == "loading":
             self._content_stack.set_visible_child_name("empty")
 
-    def _on_response_chunk(
-        self, _service: CopilotService, session_id: str, delta: str
-    ) -> None:
+    def _on_response_chunk(self, _service: CopilotService, session_id: str, delta: str) -> None:
         if session_id == self._current_session_id:
             self._chat_view.append_streaming_delta(delta)
 
@@ -334,9 +330,7 @@ class CopilotWindow(Adw.ApplicationWindow):
             self._store.save_conversation(conv)
             self._store.save_messages(session_id, conv.messages)
 
-    def _on_session_idle(
-        self, _service: CopilotService, session_id: str
-    ) -> None:
+    def _on_session_idle(self, _service: CopilotService, session_id: str) -> None:
         # If this is from a newly created conversation, select it
         conv = self._service.conversations.get(session_id)
         if conv is None:
@@ -364,21 +358,15 @@ class CopilotWindow(Adw.ApplicationWindow):
         if self._store is not None:
             self._store.update_title(session_id, title)
 
-    def _on_turn_start(
-        self, _service: CopilotService, session_id: str
-    ) -> None:
+    def _on_turn_start(self, _service: CopilotService, session_id: str) -> None:
         if session_id == self._current_session_id:
             self._chat_input.set_loading(True)
 
-    def _on_turn_end(
-        self, _service: CopilotService, session_id: str
-    ) -> None:
+    def _on_turn_end(self, _service: CopilotService, session_id: str) -> None:
         if session_id == self._current_session_id:
             self._chat_input.set_loading(False)
 
-    def _on_service_error(
-        self, _service: CopilotService, message: str
-    ) -> None:
+    def _on_service_error(self, _service: CopilotService, message: str) -> None:
         # Fatal errors: show a full-pane StatusPage
         fatal_keywords = ("not found", "cli not found", "no such file", "enoent")
         if any(kw in message.lower() for kw in fatal_keywords):
@@ -389,9 +377,7 @@ class CopilotWindow(Adw.ApplicationWindow):
         self._chat_input.set_loading(False)
         log.error("Service error: %s", message)
 
-    def _on_models_loaded(
-        self, _service: CopilotService, models: object
-    ) -> None:
+    def _on_models_loaded(self, _service: CopilotService, models: object) -> None:
         """Store loaded models for the new-chat dialog."""
         # Enable New Chat now that we have models
         self._new_chat_action.set_enabled(True)
@@ -400,9 +386,7 @@ class CopilotWindow(Adw.ApplicationWindow):
     # User interactions
     # ------------------------------------------------------------------
 
-    def _on_new_chat_action(
-        self, _action: Gio.SimpleAction, _param: GLib.Variant | None
-    ) -> None:
+    def _on_new_chat_action(self, _action: Gio.SimpleAction, _param: GLib.Variant | None) -> None:
         """Handle "New Chat" action — show model selection dialog."""
         self._show_new_chat_dialog()
 
@@ -444,9 +428,7 @@ class CopilotWindow(Adw.ApplicationWindow):
         dialog.set_extra_child(group)
         dialog.add_response("cancel", "Cancel")
         dialog.add_response("create", "Create")
-        dialog.set_response_appearance(
-            "create", Adw.ResponseAppearance.SUGGESTED
-        )
+        dialog.set_response_appearance("create", Adw.ResponseAppearance.SUGGESTED)
         dialog.set_default_response("create")
         dialog.set_close_response("cancel")
 
@@ -456,7 +438,7 @@ class CopilotWindow(Adw.ApplicationWindow):
             selected_model = ""
             for row, mid in model_rows:
                 check_btn = row.get_activatable_widget()
-                if check_btn is not None and check_btn.get_active():
+                if check_btn is not None and check_btn.get_active():  # type: ignore[attr-defined]
                     selected_model = mid
                     break
             self._service.create_conversation(selected_model)
@@ -508,9 +490,7 @@ class CopilotWindow(Adw.ApplicationWindow):
         dialog.set_body("This conversation will be permanently removed.")
         dialog.add_response("cancel", "Cancel")
         dialog.add_response("delete", "Delete")
-        dialog.set_response_appearance(
-            "delete", Adw.ResponseAppearance.DESTRUCTIVE
-        )
+        dialog.set_response_appearance("delete", Adw.ResponseAppearance.DESTRUCTIVE)
         dialog.set_default_response("cancel")
         dialog.set_close_response("cancel")
 
@@ -550,9 +530,7 @@ class CopilotWindow(Adw.ApplicationWindow):
 
         dialog.add_response("cancel", "Cancel")
         dialog.add_response("rename", "Rename")
-        dialog.set_response_appearance(
-            "rename", Adw.ResponseAppearance.SUGGESTED
-        )
+        dialog.set_response_appearance("rename", Adw.ResponseAppearance.SUGGESTED)
         dialog.set_default_response("rename")
         dialog.set_close_response("cancel")
 
@@ -577,9 +555,7 @@ class CopilotWindow(Adw.ApplicationWindow):
         dialog.connect("response", on_response)
         dialog.present(self)
 
-    def _on_search_action(
-        self, _action: Gio.SimpleAction, _param: GLib.Variant | None
-    ) -> None:
+    def _on_search_action(self, _action: Gio.SimpleAction, _param: GLib.Variant | None) -> None:
         """Toggle the search bar (Ctrl+K)."""
         self._search_button.set_active(not self._search_button.get_active())
         if self._search_button.get_active():
@@ -602,9 +578,7 @@ class CopilotWindow(Adw.ApplicationWindow):
         self._content_page.set_title("Chat")
         self._conversation_list.deselect_all()
 
-    def _on_escape_action(
-        self, _action: Gio.SimpleAction, _param: GLib.Variant | None
-    ) -> None:
+    def _on_escape_action(self, _action: Gio.SimpleAction, _param: GLib.Variant | None) -> None:
         """Handle Escape: close search bar, or stop generation if streaming."""
         if self._search_button.get_active():
             self._search_button.set_active(False)
@@ -619,9 +593,7 @@ class CopilotWindow(Adw.ApplicationWindow):
         self._content_stack.set_visible_child_name("error")
         self._new_chat_action.set_enabled(False)
 
-    def _on_show_help_overlay(
-        self, _action: Gio.SimpleAction, _param: GLib.Variant | None
-    ) -> None:
+    def _on_show_help_overlay(self, _action: Gio.SimpleAction, _param: GLib.Variant | None) -> None:
         """Present the keyboard shortcuts window (F1)."""
         self._shortcuts_window.present()
 

@@ -11,14 +11,14 @@ Provides an ``Adw.PreferencesDialog`` with three pages:
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Adw, Gio, GLib, GObject, Gtk  # noqa: E402
+from gi.repository import Adw, Gio, Gtk  # noqa: E402
 
 if TYPE_CHECKING:
     from ..backend.auth_manager import AuthManager
@@ -37,7 +37,7 @@ class PreferencesDialog(Adw.PreferencesDialog):
         settings: Gio.Settings,
         auth_manager: AuthManager,
         service: CopilotService | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
         self._settings = settings
@@ -103,24 +103,16 @@ class PreferencesDialog(Adw.PreferencesDialog):
             title="Streaming Responses",
             subtitle="Show responses token-by-token as they arrive.",
         )
-        self._streaming_switch.set_active(
-            self._settings.get_boolean("streaming-enabled")
-        )
-        self._streaming_switch.connect(
-            "notify::active", self._on_streaming_changed
-        )
+        self._streaming_switch.set_active(self._settings.get_boolean("streaming-enabled"))
+        self._streaming_switch.connect("notify::active", self._on_streaming_changed)
         chat_group.add(self._streaming_switch)
 
         # --- System message ---
         self._system_msg_row = Adw.EntryRow(
             title="System Message",
         )
-        self._system_msg_row.set_text(
-            self._settings.get_string("system-message")
-        )
-        self._system_msg_row.connect(
-            "changed", self._on_system_message_changed
-        )
+        self._system_msg_row.set_text(self._settings.get_string("system-message"))
+        self._system_msg_row.connect("changed", self._on_system_message_changed)
         chat_group.add(self._system_msg_row)
 
     # ==================================================================
@@ -141,9 +133,7 @@ class PreferencesDialog(Adw.PreferencesDialog):
         self._auth_status_row = Adw.ActionRow(
             title="Authentication Method",
         )
-        self._auth_status_icon = Gtk.Image.new_from_icon_name(
-            "emblem-ok-symbolic"
-        )
+        self._auth_status_icon = Gtk.Image.new_from_icon_name("emblem-ok-symbolic")
         self._auth_status_row.add_prefix(self._auth_status_icon)
         status_group.add(self._auth_status_row)
         self._update_auth_status()
@@ -190,9 +180,7 @@ class PreferencesDialog(Adw.PreferencesDialog):
             title="Sign in with GitHub",
             subtitle="Opens the GitHub device activation page.",
         )
-        login_row.add_prefix(
-            Gtk.Image.new_from_icon_name("web-browser-symbolic")
-        )
+        login_row.add_prefix(Gtk.Image.new_from_icon_name("web-browser-symbolic"))
         login_btn = Gtk.Button(label="Sign In")
         login_btn.set_valign(Gtk.Align.CENTER)
         login_btn.connect("clicked", self._on_github_login)
@@ -222,9 +210,7 @@ class PreferencesDialog(Adw.PreferencesDialog):
         page.add(cli_group)
 
         self._cli_path_row = Adw.EntryRow(title="CLI Path Override")
-        self._cli_path_row.set_text(
-            self._settings.get_string("cli-path")
-        )
+        self._cli_path_row.set_text(self._settings.get_string("cli-path"))
         self._cli_path_row.connect("changed", self._on_cli_path_changed)
         cli_group.add(self._cli_path_row)
 
@@ -244,17 +230,14 @@ class PreferencesDialog(Adw.PreferencesDialog):
         current_level = self._settings.get_string("log-level")
         level_map = {"warning": 0, "info": 1, "debug": 2, "error": 3}
         self._log_level_row.set_selected(level_map.get(current_level, 0))
-        self._log_level_row.connect(
-            "notify::selected", self._on_log_level_changed
-        )
+        self._log_level_row.connect("notify::selected", self._on_log_level_changed)
         log_group.add(self._log_level_row)
 
         # --- BYOK (Bring Your Own Key) ---
         byok_group = Adw.PreferencesGroup(
             title="Custom Provider (BYOK)",
             description=(
-                "Connect to a custom OpenAI-compatible API endpoint "
-                "instead of GitHub Copilot."
+                "Connect to a custom OpenAI-compatible API endpoint instead of GitHub Copilot."
             ),
         )
         page.add(byok_group)
@@ -264,20 +247,14 @@ class PreferencesDialog(Adw.PreferencesDialog):
             subtitle="Override the default Copilot backend.",
         )
         self._byok_enabled_switch.set_active(
-            self._settings.get_boolean("byok-enabled")
-            if self._has_key("byok-enabled")
-            else False
+            self._settings.get_boolean("byok-enabled") if self._has_key("byok-enabled") else False
         )
-        self._byok_enabled_switch.connect(
-            "notify::active", self._on_byok_toggled
-        )
+        self._byok_enabled_switch.connect("notify::active", self._on_byok_toggled)
         byok_group.add(self._byok_enabled_switch)
 
         self._byok_url_row = Adw.EntryRow(title="API Base URL")
         self._byok_url_row.set_text(
-            self._settings.get_string("byok-base-url")
-            if self._has_key("byok-base-url")
-            else ""
+            self._settings.get_string("byok-base-url") if self._has_key("byok-base-url") else ""
         )
         self._byok_url_row.connect("changed", self._on_byok_url_changed)
         byok_group.add(self._byok_url_row)
@@ -287,9 +264,7 @@ class PreferencesDialog(Adw.PreferencesDialog):
 
         self._byok_model_row = Adw.EntryRow(title="Model Name")
         self._byok_model_row.set_text(
-            self._settings.get_string("byok-model")
-            if self._has_key("byok-model")
-            else ""
+            self._settings.get_string("byok-model") if self._has_key("byok-model") else ""
         )
         self._byok_model_row.connect("changed", self._on_byok_model_changed)
         byok_group.add(self._byok_model_row)
@@ -317,7 +292,7 @@ class PreferencesDialog(Adw.PreferencesDialog):
     # General page handlers
     # ==================================================================
 
-    def _on_model_changed(self, row: Adw.ComboRow, _pspec) -> None:
+    def _on_model_changed(self, row: Adw.ComboRow, _pspec: Any) -> None:
         idx = row.get_selected()
         if idx == 0:
             self._settings.set_string("default-model", "")
@@ -326,7 +301,7 @@ class PreferencesDialog(Adw.PreferencesDialog):
             if item:
                 self._settings.set_string("default-model", item)
 
-    def _on_streaming_changed(self, switch: Adw.SwitchRow, _pspec) -> None:
+    def _on_streaming_changed(self, switch: Adw.SwitchRow, _pspec: Any) -> None:
         self._settings.set_boolean("streaming-enabled", switch.get_active())
 
     def _on_system_message_changed(self, row: Adw.EntryRow) -> None:
@@ -342,17 +317,13 @@ class PreferencesDialog(Adw.PreferencesDialog):
 
         if self._auth_manager.is_authenticated:
             login_str = f" ({login})" if login else ""
-            self._auth_status_row.set_subtitle(
-                f"{method.value}{login_str}"
-            )
+            self._auth_status_row.set_subtitle(f"{method.value}{login_str}")
             self._auth_status_icon.set_from_icon_name("emblem-ok-symbolic")
         else:
             self._auth_status_row.set_subtitle("Not authenticated")
-            self._auth_status_icon.set_from_icon_name(
-                "dialog-warning-symbolic"
-            )
+            self._auth_status_icon.set_from_icon_name("dialog-warning-symbolic")
 
-    def _on_auth_changed(self, _mgr, method: str, is_auth: bool) -> None:
+    def _on_auth_changed(self, _mgr: Any, method: str, is_auth: bool) -> None:
         self._update_auth_status()
 
     def _on_save_token(self, _btn: Gtk.Button) -> None:
@@ -366,9 +337,7 @@ class PreferencesDialog(Adw.PreferencesDialog):
             self._pref_token_entry.set_text("")
             self.add_toast(Adw.Toast(title="Token saved to Keyring"))
         else:
-            self.add_toast(
-                Adw.Toast(title="Failed to save token — is Keyring available?")
-            )
+            self.add_toast(Adw.Toast(title="Failed to save token — is Keyring available?"))
 
     def _on_remove_token(self, _btn: Gtk.Button) -> None:
         removed = self._auth_manager.delete_token()
@@ -379,9 +348,7 @@ class PreferencesDialog(Adw.PreferencesDialog):
 
     def _on_github_login(self, _btn: Gtk.Button) -> None:
         try:
-            Gio.AppInfo.launch_default_for_uri(
-                "https://github.com/login/device", None
-            )
+            Gio.AppInfo.launch_default_for_uri("https://github.com/login/device", None)
         except Exception:
             log.exception("Failed to open browser")
 
@@ -392,13 +359,13 @@ class PreferencesDialog(Adw.PreferencesDialog):
     def _on_cli_path_changed(self, row: Adw.EntryRow) -> None:
         self._settings.set_string("cli-path", row.get_text())
 
-    def _on_log_level_changed(self, row: Adw.ComboRow, _pspec) -> None:
+    def _on_log_level_changed(self, row: Adw.ComboRow, _pspec: Any) -> None:
         idx = row.get_selected()
         levels = ["warning", "info", "debug", "error"]
         if 0 <= idx < len(levels):
             self._settings.set_string("log-level", levels[idx])
 
-    def _on_byok_toggled(self, switch: Adw.SwitchRow, _pspec) -> None:
+    def _on_byok_toggled(self, switch: Adw.SwitchRow, _pspec: Any) -> None:
         if self._has_key("byok-enabled"):
             self._settings.set_boolean("byok-enabled", switch.get_active())
         self._update_byok_sensitivity()
@@ -420,7 +387,7 @@ class PreferencesDialog(Adw.PreferencesDialog):
         self._byok_key_row.remove_css_class("error")
 
         # Store under a different schema attribute
-        from ..backend.auth_manager import _SECRET_AVAILABLE, _TOKEN_SCHEMA
+        from ..backend.auth_manager import _SECRET_AVAILABLE
 
         if _SECRET_AVAILABLE:
             gi.require_version("Secret", "1")
@@ -445,9 +412,7 @@ class PreferencesDialog(Adw.PreferencesDialog):
             else:
                 self.add_toast(Adw.Toast(title="Failed to save BYOK key"))
         else:
-            self.add_toast(
-                Adw.Toast(title="Keyring unavailable — cannot store key")
-            )
+            self.add_toast(Adw.Toast(title="Keyring unavailable — cannot store key"))
 
     def _update_byok_sensitivity(self) -> None:
         """Enable/disable BYOK fields based on toggle state."""

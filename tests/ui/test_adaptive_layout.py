@@ -8,11 +8,10 @@ restoring the split view on wider widths.
 
 from __future__ import annotations
 
+import contextlib
 import time
 
 import pytest
-
-from .conftest import find_by_role_and_name, wait_for_sdk_ready
 
 pytestmark = [
     pytest.mark.ui,
@@ -38,12 +37,10 @@ class TestAdaptiveLayout:
     def test_window_resizable(self, app_node):
         """The window should be resizable (AT-SPI may not report this correctly)."""
         window = app_node.child(roleName="frame")
-        try:
-            # dogtail's .resizable may return False even for resizable windows
-            # when ponytail is not running, so we just verify no crash
+        # dogtail's .resizable may return False even for resizable windows
+        # when ponytail is not running, so we just verify no crash
+        with contextlib.suppress(RuntimeError, AttributeError):
             _ = window.resizable
-        except (RuntimeError, AttributeError):
-            pass
         # The important thing is no crash — window is still showing
         assert window.showing
 

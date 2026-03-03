@@ -10,17 +10,15 @@ blocks are rendered as embedded :class:`CodeBlock` child widgets via
 from __future__ import annotations
 
 import logging
-import re
 from typing import Any
 
-import mistune
-
 import gi
+import mistune
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Gtk, Pango, Gdk  # noqa: E402
+from gi.repository import Gdk, Gtk, Pango  # noqa: E402
 
 from .code_block import CodeBlock  # noqa: E402
 
@@ -72,7 +70,7 @@ class MarkdownTextView(Gtk.TextView):
     # Size negotiation
     # ------------------------------------------------------------------
 
-    def do_measure(self, orientation: Gtk.Orientation, for_size: int):
+    def do_measure(self, orientation: Gtk.Orientation, for_size: int) -> tuple[int, int, int, int]:
         """Content-aware natural width.
 
         ``Gtk.TextView`` with ``wrap_mode=WORD_CHAR`` reports a natural
@@ -80,9 +78,7 @@ class MarkdownTextView(Gtk.TextView):
         message bubble.  We override this to return a width derived from
         the actual content length (capped at :pyattr:`_MAX_CONTENT_WIDTH`).
         """
-        min_w, nat_w, min_bl, nat_bl = Gtk.TextView.do_measure(
-            self, orientation, for_size
-        )
+        min_w, nat_w, min_bl, nat_bl = Gtk.TextView.do_measure(self, orientation, for_size)
         if orientation == Gtk.Orientation.HORIZONTAL:
             if self._raw_markdown:
                 lines = self._raw_markdown.split("\n")
@@ -201,24 +197,19 @@ class MarkdownTextView(Gtk.TextView):
         md = mistune.create_markdown(renderer=None)
         tokens = md(self._raw_markdown)
 
-        self._walk_tokens(buf, tokens)
+        self._walk_tokens(buf, tokens)  # type: ignore[arg-type]
 
-    def _walk_tokens(
-        self, buf: Gtk.TextBuffer, tokens: list[dict[str, Any]]
-    ) -> None:
+    def _walk_tokens(self, buf: Gtk.TextBuffer, tokens: list[dict[str, Any]]) -> None:
         """Recursively walk the mistune AST token list."""
         for token in tokens:
             ttype = token.get("type", "")
             children = token.get("children")
-            attrs = token.get("attrs", {}) or {}
 
             if ttype == "paragraph":
                 self._render_paragraph(buf, children)
             elif ttype == "heading":
                 self._render_heading(buf, token, children)
-            elif ttype == "code_block":
-                self._render_code_block(buf, token)
-            elif ttype == "block_code":
+            elif ttype == "code_block" or ttype == "block_code":
                 self._render_code_block(buf, token)
             elif ttype == "list":
                 self._render_list(buf, token, depth=0)
@@ -237,9 +228,7 @@ class MarkdownTextView(Gtk.TextView):
     # Block-level renderers
     # ------------------------------------------------------------------
 
-    def _render_paragraph(
-        self, buf: Gtk.TextBuffer, children: list[dict] | None
-    ) -> None:
+    def _render_paragraph(self, buf: Gtk.TextBuffer, children: list[dict] | None) -> None:
         """Render a paragraph — just its inline children + trailing newline."""
         if not children:
             return
@@ -290,9 +279,7 @@ class MarkdownTextView(Gtk.TextView):
         end = buf.get_end_iter()
         buf.insert(end, "\n")
 
-    def _render_list(
-        self, buf: Gtk.TextBuffer, token: dict, depth: int = 0
-    ) -> None:
+    def _render_list(self, buf: Gtk.TextBuffer, token: dict, depth: int = 0) -> None:
         """Render an ordered or unordered list."""
         attrs = token.get("attrs", {}) or {}
         ordered = attrs.get("ordered", False)
@@ -354,9 +341,7 @@ class MarkdownTextView(Gtk.TextView):
         if nested_list is not None:
             self._render_list(buf, nested_list, depth=depth + 1)
 
-    def _render_blockquote(
-        self, buf: Gtk.TextBuffer, children: list[dict] | None
-    ) -> None:
+    def _render_blockquote(self, buf: Gtk.TextBuffer, children: list[dict] | None) -> None:
         if not children:
             return
         start_mark = self._create_mark(buf)
@@ -401,9 +386,7 @@ class MarkdownTextView(Gtk.TextView):
                 self._render_inline(buf, children or [], tags + ["italic"])
 
             elif ttype == "strikethrough":
-                self._render_inline(
-                    buf, children or [], tags + ["strikethrough"]
-                )
+                self._render_inline(buf, children or [], tags + ["strikethrough"])
 
             elif ttype == "codespan":
                 raw = token.get("raw", "") or token.get("text", "")
@@ -412,8 +395,6 @@ class MarkdownTextView(Gtk.TextView):
                 self._insert_text(buf, code_text, tags + ["inline-code"])
 
             elif ttype == "link":
-                attrs = token.get("attrs", {}) or {}
-                url = attrs.get("url", "")
                 # We store the URL as invisible data—click handling done elsewhere
                 self._render_inline(buf, children or [], tags + ["link"])
 

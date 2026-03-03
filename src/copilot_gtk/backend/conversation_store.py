@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -124,7 +124,7 @@ class ConversationStore:
         conv = self._conversations.get(session_id)
         if conv is not None:
             conv["title"] = title
-            conv["updated_at"] = datetime.now(timezone.utc).isoformat()
+            conv["updated_at"] = datetime.now(UTC).isoformat()
             self._flush()
 
     def update_timestamp(self, session_id: str) -> None:
@@ -135,7 +135,7 @@ class ConversationStore:
         """
         conv = self._conversations.get(session_id)
         if conv is not None:
-            conv["updated_at"] = datetime.now(timezone.utc).isoformat()
+            conv["updated_at"] = datetime.now(UTC).isoformat()
             self._flush()
 
     # ------------------------------------------------------------------
@@ -243,8 +243,6 @@ class ConversationStore:
         """Write the current conversations to disk as a JSON list."""
         data = list(self._conversations.values())
         try:
-            self._conversations_file.write_text(
-                json.dumps(data, indent=2), encoding="utf-8"
-            )
+            self._conversations_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
         except OSError as exc:
             log.error("Failed to write conversations file: %s", exc)
