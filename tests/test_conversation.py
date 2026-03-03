@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Unit tests for the Conversation data model."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from copilot_gtk.backend.conversation import Conversation
 from copilot_gtk.backend.message import Message, MessageRole
@@ -45,9 +45,7 @@ class TestConversation:
     def test_get_streaming_message(self) -> None:
         conv = Conversation(session_id="sess-1")
         conv.add_message(Message(role=MessageRole.USER, content="Q"))
-        streaming = Message(
-            role=MessageRole.ASSISTANT, content="", is_streaming=True
-        )
+        streaming = Message(role=MessageRole.ASSISTANT, content="", is_streaming=True)
         conv.add_message(streaming)
 
         result = conv.get_streaming_message()
@@ -64,8 +62,8 @@ class TestConversation:
             session_id="sess-42",
             title="Test Chat",
             model="gpt-4",
-            created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
-            updated_at=datetime(2026, 1, 2, tzinfo=timezone.utc),
+            created_at=datetime(2026, 1, 1, tzinfo=UTC),
+            updated_at=datetime(2026, 1, 2, tzinfo=UTC),
         )
         d = original.to_dict()
         restored = Conversation.from_dict(d)

@@ -7,13 +7,13 @@ from typing import TYPE_CHECKING
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from gi.repository import Adw, Gtk, Pango  # noqa: E402
 
 if TYPE_CHECKING:
-    from ..backend import MessageRole
+    pass
 
 from .markdown_renderer import MarkdownTextView  # noqa: E402
 
@@ -94,9 +94,7 @@ class MessageBubble(Gtk.Box):
                 use_markup=False,
                 max_width_chars=60,
             )
-            self._text_label.set_natural_wrap_mode(
-                Gtk.NaturalWrapMode.WORD
-            )
+            self._text_label.set_natural_wrap_mode(Gtk.NaturalWrapMode.WORD)
             self._text_label.add_css_class("body")
             content_box.append(self._text_label)
         else:

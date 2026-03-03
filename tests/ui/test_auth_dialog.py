@@ -12,7 +12,7 @@ import time
 
 import pytest
 
-from .conftest import find_by_role_and_name, wait_for_sdk_ready
+from .conftest import wait_for_sdk_ready
 
 pytestmark = [
     pytest.mark.ui,

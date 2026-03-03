@@ -23,7 +23,7 @@ from pathlib import Path
 
 import gi
 
-gi.require_version('GLib', '2.0')
+gi.require_version("GLib", "2.0")
 from gi.repository import GLib, GObject  # noqa: E402
 
 from .conversation import Conversation  # noqa: E402
@@ -171,7 +171,7 @@ class MockCopilotService(GObject.Object):
         """Emit a canned list of models."""
         model_defs = _DEFAULT_MODELS
         if self._fixture_responses:
-            model_defs = self._fixture_responses.get("models", _DEFAULT_MODELS)  # type: ignore[union-attr]
+            model_defs = self._fixture_responses.get("models", _DEFAULT_MODELS)  # type: ignore[attr-defined]
 
         self._models = [_MockModelInfo(m["id"], m["name"]) for m in model_defs]
 
@@ -187,6 +187,7 @@ class MockCopilotService(GObject.Object):
 
     def check_auth_status(self) -> None:
         """Always report as authenticated."""
+
         def _emit() -> bool:
             self.emit("auth-status", True, "mock-user")
             return GLib.SOURCE_REMOVE
@@ -223,17 +224,17 @@ class MockCopilotService(GObject.Object):
         conv.add_message(user_msg)
 
         # Create assistant message placeholder
-        assistant_msg = Message(
-            role=MessageRole.ASSISTANT, content="", is_streaming=True
-        )
+        assistant_msg = Message(role=MessageRole.ASSISTANT, content="", is_streaming=True)
         conv.add_message(assistant_msg)
 
         # Check for error simulation
         mock_error = os.environ.get("COPILOT_GTK_MOCK_ERROR")
         if mock_error:
+
             def _emit_error() -> bool:
                 self.emit("error", mock_error)
                 return GLib.SOURCE_REMOVE
+
             GLib.idle_add(_emit_error)
             return
 
@@ -294,7 +295,7 @@ class MockCopilotService(GObject.Object):
             for fixture in self._fixture_responses:
                 trigger = fixture.get("trigger", "")
                 if trigger and trigger.lower() in prompt.lower():
-                    return fixture.get("response", _DEFAULT_RESPONSE)
+                    return fixture.get("response", _DEFAULT_RESPONSE)  # type: ignore[no-any-return]
 
         return _DEFAULT_RESPONSE
 
@@ -306,7 +307,7 @@ class MockCopilotService(GObject.Object):
         chunk_size = max(1, len(text) // n)
         chunks = []
         for i in range(0, len(text), chunk_size):
-            chunks.append(text[i:i + chunk_size])
+            chunks.append(text[i : i + chunk_size])
         return chunks
 
     def _emit_chunk(
@@ -365,4 +366,5 @@ def create_service() -> GObject.Object:
         log.info("Using MockCopilotService (COPILOT_GTK_MOCK_BACKEND=1)")
         return MockCopilotService()
     from .copilot_service import CopilotService
+
     return CopilotService()

@@ -7,10 +7,7 @@ generation using mocked libsecret calls.
 
 from __future__ import annotations
 
-import os
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 import gi
 
@@ -51,9 +48,7 @@ class TestAuthManagerDetection:
         """Token from GNOME Keyring takes priority over env vars."""
         monkeypatch.setenv("GITHUB_TOKEN", "ghp_env")
         mgr = AuthManager()
-        with patch.object(
-            mgr, "_load_token_from_keyring", return_value="ghp_keyring"
-        ):
+        with patch.object(mgr, "_load_token_from_keyring", return_value="ghp_keyring"):
             result = mgr.detect()
         assert result == AuthMethod.TOKEN_KEYRING
 
@@ -87,9 +82,7 @@ class TestAuthManagerClientOptions:
         mgr = AuthManager()
         monkeypatch.delenv("GITHUB_TOKEN", raising=False)
         monkeypatch.delenv("GH_TOKEN", raising=False)
-        with patch.object(
-            mgr, "_load_token_from_keyring", return_value="ghp_secret"
-        ):
+        with patch.object(mgr, "_load_token_from_keyring", return_value="ghp_secret"):
             mgr.detect()
         opts = mgr.get_client_options()
         assert opts["github_token"] == "ghp_secret"
@@ -143,9 +136,11 @@ class TestAuthManagerTokenStorage:
         monkeypatch.delenv("GH_TOKEN", raising=False)
         mock_secret.password_clear_sync.return_value = True
         mgr = AuthManager()
-        with patch("copilot_gtk.backend.auth_manager._TOKEN_SCHEMA", MagicMock()):
-            with patch.object(mgr, "_load_token_from_keyring", return_value=None):
-                result = mgr.delete_token()
+        with (
+            patch("copilot_gtk.backend.auth_manager._TOKEN_SCHEMA", MagicMock()),
+            patch.object(mgr, "_load_token_from_keyring", return_value=None),
+        ):
+            result = mgr.delete_token()
         assert result is True
         # After deletion, should re-detect and fall back
         assert mgr.method != AuthMethod.TOKEN_KEYRING

@@ -125,9 +125,7 @@ class TestAccessibilityAudit:
         all_nodes = _collect_nodes(window)
 
         # A well-structured GTK4 app should have many nodes
-        assert len(all_nodes) > 10, (
-            f"AT-SPI tree too shallow: only {len(all_nodes)} nodes"
-        )
+        assert len(all_nodes) > 10, f"AT-SPI tree too shallow: only {len(all_nodes)} nodes"
 
     def test_buttons_have_actions(self, app_node):
         """All buttons should have at least one available action."""
@@ -149,8 +147,7 @@ class TestAccessibilityAudit:
 
         if violations:
             pytest.fail(
-                f"Found {len(violations)} buttons without actions:\n"
-                + "\n".join(violations[:10])
+                f"Found {len(violations)} buttons without actions:\n" + "\n".join(violations[:10])
             )
 
     def test_labels_are_not_empty(self, app_node):
@@ -175,6 +172,4 @@ class TestAccessibilityAudit:
         # Allow some empty labels (spacers, decorative) but flag if majority are empty
         if total_labels > 0:
             ratio = empty_labels / total_labels
-            assert ratio < 0.5, (
-                f"{empty_labels}/{total_labels} labels are empty ({ratio:.0%})"
-            )
+            assert ratio < 0.5, f"{empty_labels}/{total_labels} labels are empty ({ratio:.0%})"

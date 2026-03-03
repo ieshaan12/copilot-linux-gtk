@@ -11,8 +11,6 @@ import time
 
 import pytest
 
-from .conftest import find_by_role_and_name, wait_for_sdk_ready
-
 pytestmark = [
     pytest.mark.ui,
     pytest.mark.timeout(60),
@@ -38,15 +36,25 @@ class TestPreferencesDialog:
         """
         try:
             import subprocess as sp
+
             sp.run(
                 [
-                    "gdbus", "call", "--session",
-                    "--dest", "io.github.ieshaan.CopilotGTK.Test",
-                    "--object-path", "/io/github/ieshaan/CopilotGTK/Test",
-                    "--method", "org.gtk.Actions.Activate",
-                    "preferences", "[]", "{}",
+                    "gdbus",
+                    "call",
+                    "--session",
+                    "--dest",
+                    "io.github.ieshaan.CopilotGTK.Test",
+                    "--object-path",
+                    "/io/github/ieshaan/CopilotGTK/Test",
+                    "--method",
+                    "org.gtk.Actions.Activate",
+                    "preferences",
+                    "[]",
+                    "{}",
                 ],
-                timeout=5, capture_output=True, check=True,
+                timeout=5,
+                capture_output=True,
+                check=True,
             )
             time.sleep(1)
         except Exception:

@@ -12,12 +12,11 @@ from __future__ import annotations
 
 import logging
 import os
-import signal
 import subprocess
 import sys
 import time
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
 
 import pytest
 
@@ -95,8 +94,11 @@ def _start_weston_headless() -> subprocess.Popen | None:
 def _start_headless_display() -> subprocess.Popen | None:
     """Try to start a headless display server if none is available."""
     if _have_display():
-        log.info("Display already available: DISPLAY=%s WAYLAND_DISPLAY=%s",
-                 os.environ.get("DISPLAY"), os.environ.get("WAYLAND_DISPLAY"))
+        log.info(
+            "Display already available: DISPLAY=%s WAYLAND_DISPLAY=%s",
+            os.environ.get("DISPLAY"),
+            os.environ.get("WAYLAND_DISPLAY"),
+        )
         return None
 
     # Try Xvfb first (more common in CI), then weston
@@ -136,6 +138,7 @@ def _ensure_a11y() -> None:
     # dogtail 2.0 config
     try:
         import dogtail.config
+
         dogtail.config.config.check_for_a11y = False
         dogtail.config.config.search_cut_off_limit = 30
         dogtail.config.config.default_delay = 0.3
@@ -152,7 +155,7 @@ def _find_app_node(timeout: float = STARTUP_TIMEOUT):
     # - "Copilot for GNOME" (when GApplication name is picked up)
     # - "main.py" (when launched via `python -m copilot_gtk.main`)
     # - "copilot-gtk" (entry-point name)
-    _MATCH_NAMES = ("copilot", "main.py", "copilot-gtk")
+    match_names = ("copilot", "main.py", "copilot-gtk")
 
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -160,7 +163,7 @@ def _find_app_node(timeout: float = STARTUP_TIMEOUT):
             root = dogtail.tree.root
             for app in root.applications():
                 app_name = getattr(app, "name", "") or ""
-                if any(n in app_name.lower() for n in _MATCH_NAMES):
+                if any(n in app_name.lower() for n in match_names):
                     log.info("Found app in AT-SPI tree: %r", app_name)
                     return app
         except Exception:
@@ -175,9 +178,7 @@ def _find_app_node(timeout: float = STARTUP_TIMEOUT):
     except Exception:
         pass
 
-    raise TimeoutError(
-        f"App '{APP_NAME}' did not appear in AT-SPI tree within {timeout}s"
-    )
+    raise TimeoutError(f"App '{APP_NAME}' did not appear in AT-SPI tree within {timeout}s")
 
 
 # ---------------------------------------------------------------------------
@@ -214,8 +215,10 @@ def find_by_role_and_name(node, role: str, name_substring: str):
 
     try:
         children = node.find_children(
-            lambda n: n.roleName in role_set
-            and name_substring.lower() in (getattr(n, "name", "") or "").lower()
+            lambda n: (
+                n.roleName in role_set
+                and name_substring.lower() in (getattr(n, "name", "") or "").lower()
+            )
         )
         return children[0] if children else None
     except Exception:
@@ -241,8 +244,9 @@ def wait_for_sdk_ready(app_node, timeout: float = 10) -> bool:
             return True
         grp = safe_find(
             window,
-            lambda n: n.roleName == "grouping"
-            and "Conversations" in (getattr(n, "name", "") or ""),
+            lambda n: (
+                n.roleName == "grouping" and "Conversations" in (getattr(n, "name", "") or "")
+            ),
         )
         if grp is not None:
             return True
@@ -259,12 +263,18 @@ def click_new_chat(app_node) -> bool:
     try:
         subprocess.run(
             [
-                "gdbus", "call",
+                "gdbus",
+                "call",
                 "--session",
-                "--dest", TEST_APP_ID,
-                "--object-path", TEST_WINDOW_PATH,
-                "--method", "org.gtk.Actions.Activate",
-                "new-chat", "[]", "{}",
+                "--dest",
+                TEST_APP_ID,
+                "--object-path",
+                TEST_WINDOW_PATH,
+                "--method",
+                "org.gtk.Actions.Activate",
+                "new-chat",
+                "[]",
+                "{}",
             ],
             timeout=5,
             capture_output=True,
@@ -291,9 +301,7 @@ def find_text_input(app_node):
     """Find a sensitive text input widget in the window."""
     window = app_node.child(roleName="frame")
     try:
-        entries = window.find_children(
-            lambda n: n.roleName in ("text", "text entry", "editbar")
-        )
+        entries = window.find_children(lambda n: n.roleName in ("text", "text entry", "editbar"))
         for entry in entries:
             try:
                 if entry.sensitive:
@@ -350,6 +358,7 @@ def _take_screenshot(name: str) -> Path | None:
         # Fallback: try Pillow with X11
         try:
             from PIL import ImageGrab
+
             img = ImageGrab.grab()
             img.save(str(path))
             log.info("Screenshot saved (Pillow): %s", path)
@@ -420,8 +429,7 @@ def app_process(
         stdout = proc.stdout.read().decode() if proc.stdout else ""
         stderr = proc.stderr.read().decode() if proc.stderr else ""
         pytest.fail(
-            f"App exited prematurely (code {proc.returncode}).\n"
-            f"stdout: {stdout}\nstderr: {stderr}"
+            f"App exited prematurely (code {proc.returncode}).\nstdout: {stdout}\nstderr: {stderr}"
         )
 
     yield proc
@@ -449,7 +457,6 @@ def screenshot_on_failure(request):
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     """Store test result in item for the screenshot_on_failure fixture."""
-    import pluggy
 
     outcome = yield
     rep = outcome.get_result()

@@ -7,6 +7,7 @@ the application and the chat view remains functional.
 
 from __future__ import annotations
 
+import contextlib
 import os
 import time
 
@@ -62,12 +63,11 @@ class TestMarkdownRendering:
             # Try to send
             window = app_node.child(roleName="frame")
             from .conftest import find_by_role_and_name as _find_btn
+
             send_btn = _find_btn(window, "button", "Send")
             if send_btn:
-                try:
+                with contextlib.suppress(Exception):
                     send_btn.click()
-                except Exception:
-                    pass
 
             time.sleep(4)
             assert window.showing, "App crashed rendering Markdown"

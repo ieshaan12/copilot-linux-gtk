@@ -4,18 +4,17 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 import gi
+import pytest
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Adw, Gio, Gtk  # noqa: E402
+from gi.repository import Adw, Gio  # noqa: E402
 
-from copilot_gtk.backend.auth_manager import AuthManager, AuthMethod  # noqa: E402
+from copilot_gtk.backend.auth_manager import AuthManager  # noqa: E402
 from copilot_gtk.widgets.preferences_dialog import PreferencesDialog  # noqa: E402
 
 

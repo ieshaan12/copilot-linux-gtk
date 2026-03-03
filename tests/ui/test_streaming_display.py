@@ -7,6 +7,7 @@ auto-scroll works, and the UI remains responsive during streaming.
 
 from __future__ import annotations
 
+import contextlib
 import time
 
 import pytest
@@ -43,12 +44,11 @@ class TestStreamingDisplay:
         # Try to send
         window = app_node.child(roleName="frame")
         from .conftest import find_by_role_and_name
+
         send_btn = find_by_role_and_name(window, "button", "Send")
         if send_btn:
-            try:
+            with contextlib.suppress(Exception):
                 send_btn.click()
-            except Exception:
-                pass
 
         # Wait for streaming to complete
         time.sleep(4)

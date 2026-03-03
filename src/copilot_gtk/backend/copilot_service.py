@@ -36,13 +36,10 @@ Signals:
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 import gi
 
-gi.require_version('GLib', '2.0')
-from gi.repository import GLib, GObject  # noqa: E402
-
+gi.require_version("GLib", "2.0")
 from copilot import (  # noqa: E402
     CopilotClient,
     CopilotSession,
@@ -54,6 +51,7 @@ from copilot.generated.session_events import (  # noqa: E402
     SessionEvent,
     SessionEventType,
 )
+from gi.repository import GLib, GObject  # noqa: E402
 
 from .async_bridge import run_async  # noqa: E402
 from .conversation import Conversation  # noqa: E402
@@ -165,7 +163,7 @@ class CopilotService(GObject.Object):
         if self._client is not None:
             client = self._client
         elif client_options:
-            client = CopilotClient(client_options)
+            client = CopilotClient(client_options)  # type: ignore[arg-type]
         else:
             client = CopilotClient()
 
@@ -233,9 +231,7 @@ class CopilotService(GObject.Object):
 
         status = await self._client.get_auth_status()
         login = status.login or ""
-        GLib.idle_add(
-            self.emit, "auth-status", status.isAuthenticated, login
-        )
+        GLib.idle_add(self.emit, "auth-status", status.isAuthenticated, login)
 
     # ------------------------------------------------------------------
     # Conversation / session management
@@ -260,7 +256,7 @@ class CopilotService(GObject.Object):
             raise RuntimeError("Copilot is still connecting — please wait a moment")
 
         config: SessionConfig = {
-            "on_permission_request": PermissionHandler.approve_all,
+            "on_permission_request": PermissionHandler.approve_all,  # type: ignore[typeddict-item]
             "streaming": True,
         }
         if model:
@@ -308,9 +304,7 @@ class CopilotService(GObject.Object):
             conv.add_message(user_msg)
 
             # Pre-create a streaming assistant message placeholder
-            assistant_msg = Message(
-                role=MessageRole.ASSISTANT, content="", is_streaming=True
-            )
+            assistant_msg = Message(role=MessageRole.ASSISTANT, content="", is_streaming=True)
             conv.add_message(assistant_msg)
 
         await session.send({"prompt": prompt})
@@ -372,9 +366,7 @@ class CopilotService(GObject.Object):
                 if streaming_msg is not None:
                     streaming_msg.content = content
                     streaming_msg.finish_streaming()
-            GLib.idle_add(
-                self.emit, "response-complete", session_id, content
-            )
+            GLib.idle_add(self.emit, "response-complete", session_id, content)
 
         elif etype == SessionEventType.SESSION_IDLE:
             GLib.idle_add(self.emit, "session-idle", session_id)
@@ -384,9 +376,7 @@ class CopilotService(GObject.Object):
             conv = self._conversations.get(session_id)
             if conv is not None:
                 conv.title = title
-            GLib.idle_add(
-                self.emit, "session-title-changed", session_id, title
-            )
+            GLib.idle_add(self.emit, "session-title-changed", session_id, title)
 
         elif etype == SessionEventType.SESSION_ERROR:
             msg = getattr(data, "message", None) or "Unknown session error"

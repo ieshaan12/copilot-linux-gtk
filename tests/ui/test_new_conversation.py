@@ -14,7 +14,6 @@ import pytest
 from .conftest import (
     click_new_chat,
     find_by_role_and_name,
-    find_text_input,
     wait_for_sdk_ready,
 )
 

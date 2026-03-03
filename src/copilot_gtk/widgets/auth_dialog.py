@@ -8,15 +8,14 @@ the user clicks "Sign In" from the preferences dialog.
 from __future__ import annotations
 
 import logging
-import subprocess
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Adw, Gio, GLib, GObject, Gtk  # noqa: E402
+from gi.repository import Adw, Gio, GObject, Gtk  # noqa: E402
 
 if TYPE_CHECKING:
     from ..backend.auth_manager import AuthManager
@@ -46,7 +45,7 @@ class AuthDialog(Adw.Dialog):
         ),
     }
 
-    def __init__(self, auth_manager: AuthManager, **kwargs) -> None:
+    def __init__(self, auth_manager: AuthManager, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self._auth_manager = auth_manager
 
@@ -90,9 +89,7 @@ class AuthDialog(Adw.Dialog):
             title="Authentication Status",
             subtitle="Not authenticated",
         )
-        self._status_icon = Gtk.Image.new_from_icon_name(
-            "dialog-warning-symbolic"
-        )
+        self._status_icon = Gtk.Image.new_from_icon_name("dialog-warning-symbolic")
         self._status_icon.add_css_class("warning")
         self._status_row.add_prefix(self._status_icon)
 
@@ -110,9 +107,7 @@ class AuthDialog(Adw.Dialog):
             title="Sign in with GitHub",
             subtitle="Opens your browser for GitHub OAuth",
         )
-        login_row.add_prefix(
-            Gtk.Image.new_from_icon_name("web-browser-symbolic")
-        )
+        login_row.add_prefix(Gtk.Image.new_from_icon_name("web-browser-symbolic"))
         login_btn = Gtk.Button(label="Sign In")
         login_btn.set_valign(Gtk.Align.CENTER)
         login_btn.add_css_class("suggested-action")
@@ -133,9 +128,7 @@ class AuthDialog(Adw.Dialog):
                 title=f"${env_name} detected",
                 subtitle="This token will be used automatically.",
             )
-            env_row.add_prefix(
-                Gtk.Image.new_from_icon_name("emblem-ok-symbolic")
-            )
+            env_row.add_prefix(Gtk.Image.new_from_icon_name("emblem-ok-symbolic"))
             use_env_btn = Gtk.Button(label="Use This")
             use_env_btn.set_valign(Gtk.Align.CENTER)
             use_env_btn.add_css_class("suggested-action")
@@ -182,9 +175,7 @@ class AuthDialog(Adw.Dialog):
 
         if self._auth_manager.is_authenticated:
             login_str = f" ({login})" if login else ""
-            self._status_row.set_subtitle(
-                f"Authenticated via {method.value}{login_str}"
-            )
+            self._status_row.set_subtitle(f"Authenticated via {method.value}{login_str}")
             self._status_icon.set_from_icon_name("emblem-ok-symbolic")
             self._status_icon.remove_css_class("warning")
             self._status_icon.add_css_class("success")
@@ -203,17 +194,13 @@ class AuthDialog(Adw.Dialog):
         from ..backend.auth_manager import AuthMethod
 
         try:
-            Gio.AppInfo.launch_default_for_uri(
-                "https://github.com/login/device", None
-            )
+            Gio.AppInfo.launch_default_for_uri("https://github.com/login/device", None)
         except Exception:
             log.exception("Failed to open browser")
 
         # Assume logged_in_user will work after browser auth completes
         self._auth_manager._method = AuthMethod.LOGGED_IN_USER  # noqa: SLF001
-        self._auth_manager.emit(
-            "auth-changed", AuthMethod.LOGGED_IN_USER.value, True
-        )
+        self._auth_manager.emit("auth-changed", AuthMethod.LOGGED_IN_USER.value, True)
         self._refresh_status()
         self.emit("auth-complete", AuthMethod.LOGGED_IN_USER.value)
 

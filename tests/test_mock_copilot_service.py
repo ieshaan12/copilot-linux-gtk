@@ -5,12 +5,11 @@ import os
 from unittest.mock import MagicMock
 
 import gi
-import pytest
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
-from gi.repository import Adw, GLib  # noqa: E402
+from gi.repository import Adw  # noqa: E402
 
 Adw.init()
 
@@ -77,6 +76,7 @@ class TestCreateService:
         os.environ.pop("COPILOT_GTK_MOCK_BACKEND", None)
         svc = create_service()
         from copilot_gtk.backend.copilot_service import CopilotService
+
         assert isinstance(svc, CopilotService)
 
 

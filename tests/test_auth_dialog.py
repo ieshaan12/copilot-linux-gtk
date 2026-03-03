@@ -5,16 +5,15 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 import gi
+import pytest
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Adw, Gtk  # noqa: E402
+from gi.repository import Adw  # noqa: E402
 
-from copilot_gtk.backend.auth_manager import AuthManager, AuthMethod  # noqa: E402
+from copilot_gtk.backend.auth_manager import AuthManager  # noqa: E402
 from copilot_gtk.widgets.auth_dialog import AuthDialog  # noqa: E402
 
 
@@ -44,9 +43,7 @@ class TestAuthDialog:
 
     def test_status_shows_authenticated(self, auth_manager, monkeypatch):
         """Status updates when auth manager is authenticated."""
-        with patch.object(
-            auth_manager, "_load_token_from_keyring", return_value=None
-        ):
+        with patch.object(auth_manager, "_load_token_from_keyring", return_value=None):
             auth_manager.detect()
         dialog = AuthDialog(auth_manager=auth_manager)
         # Logged-in user is considered authenticated

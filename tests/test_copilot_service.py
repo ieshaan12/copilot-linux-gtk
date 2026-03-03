@@ -12,19 +12,17 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
+from unittest.mock import AsyncMock, MagicMock
 
 # -- Minimal GI setup -------------------------------------------------------
 import gi
+import pytest
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import GLib  # noqa: E402
 
 from copilot_gtk.backend.copilot_service import CopilotService  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # Helpers — lightweight fakes for the SDK types we interact with
@@ -103,13 +101,9 @@ def _make_mock_client(
     client = MagicMock()
     client.start = AsyncMock()
     client.stop = AsyncMock()
-    client.create_session = AsyncMock(
-        return_value=session or FakeSession()
-    )
+    client.create_session = AsyncMock(return_value=session or FakeSession())
     client.list_models = AsyncMock(return_value=models or [])
-    client.get_auth_status = AsyncMock(
-        return_value=auth or FakeAuthStatus(True, "testuser")
-    )
+    client.get_auth_status = AsyncMock(return_value=auth or FakeAuthStatus(True, "testuser"))
     return client
 
 
@@ -141,9 +135,7 @@ class TestCopilotServiceStart:
 
     def test_start_error_emits_error(self) -> None:
         mock_client = _make_mock_client()
-        mock_client.start = AsyncMock(
-            side_effect=RuntimeError("CLI not found")
-        )
+        mock_client.start = AsyncMock(side_effect=RuntimeError("CLI not found"))
         service = CopilotService(client=mock_client)
 
         with pytest.raises(RuntimeError, match="CLI not found"):
@@ -325,9 +317,7 @@ class TestCopilotServiceEventBridge:
         asyncio.run(service._create_conversation_async("gpt-4"))
 
         idles: list[str] = []
-        service.connect(
-            "session-idle", lambda _, sid: idles.append(sid)
-        )
+        service.connect("session-idle", lambda _, sid: idles.append(sid))
 
         fake_session.fire_event(
             FakeSessionEvent(

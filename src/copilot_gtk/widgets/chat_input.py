@@ -5,10 +5,10 @@ from __future__ import annotations
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
-from gi.repository import Adw, Gdk, GObject, Gtk  # noqa: E402
+from gi.repository import Gdk, GObject, Gtk  # noqa: E402
 
 
 class ChatInput(Gtk.Box):
@@ -74,7 +74,8 @@ class ChatInput(Gtk.Box):
         self._text_view.set_right_margin(12)
         self._text_view.add_css_class("chat-text-input")
         self._text_view.update_property(
-            [Gtk.AccessibleProperty.LABEL], ["Message input"],
+            [Gtk.AccessibleProperty.LABEL],
+            ["Message input"],
         )
 
         # Placeholder text
@@ -108,7 +109,8 @@ class ChatInput(Gtk.Box):
         self._send_button.set_valign(Gtk.Align.END)
         self._send_button.connect("clicked", self._on_send_clicked)
         self._send_button.update_property(
-            [Gtk.AccessibleProperty.LABEL], ["Send message"],
+            [Gtk.AccessibleProperty.LABEL],
+            ["Send message"],
         )
         self.append(self._send_button)
 
@@ -134,7 +136,8 @@ class ChatInput(Gtk.Box):
             self._send_button.remove_css_class("suggested-action")
             self._send_button.add_css_class("destructive-action")
             self._send_button.update_property(
-                [Gtk.AccessibleProperty.LABEL], ["Stop generation"],
+                [Gtk.AccessibleProperty.LABEL],
+                ["Stop generation"],
             )
             self._text_view.set_sensitive(False)
         else:
@@ -143,7 +146,8 @@ class ChatInput(Gtk.Box):
             self._send_button.remove_css_class("destructive-action")
             self._send_button.add_css_class("suggested-action")
             self._send_button.update_property(
-                [Gtk.AccessibleProperty.LABEL], ["Send message"],
+                [Gtk.AccessibleProperty.LABEL],
+                ["Send message"],
             )
             self._text_view.set_sensitive(True)
 

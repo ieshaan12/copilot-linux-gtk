@@ -2,15 +2,14 @@
 """Tests for CopilotWindow."""
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import gi
 import pytest
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
-from gi.repository import Adw, Gio, Gtk  # noqa: E402
+from gi.repository import Adw, Gtk  # noqa: E402
 
 Adw.init()
 
@@ -120,7 +119,6 @@ class TestCopilotWindow:
 
         # Chunk for a different session
         win._chat_view.add_assistant_placeholder()
-        initial_content = win._chat_view._message_box.get_first_child().content
         win._on_response_chunk(service, "s2", "ignored")
 
     def test_show_toast(self):
@@ -161,9 +159,7 @@ class TestWindowAutoTitle:
 
         conv = Conversation(session_id="s1", title="New Chat")
         conv.add_message(Message(role=MessageRole.USER, content="What is the weather today?"))
-        conv.add_message(
-            Message(role=MessageRole.ASSISTANT, content="It's sunny.")
-        )
+        conv.add_message(Message(role=MessageRole.ASSISTANT, content="It's sunny."))
         service._conversations["s1"] = conv
         win._on_session_idle(service, "s1")
 
@@ -179,9 +175,7 @@ class TestWindowAutoTitle:
         long_prompt = "A" * 70
         conv = Conversation(session_id="s1", title="New Chat")
         conv.add_message(Message(role=MessageRole.USER, content=long_prompt))
-        conv.add_message(
-            Message(role=MessageRole.ASSISTANT, content="Response")
-        )
+        conv.add_message(Message(role=MessageRole.ASSISTANT, content="Response"))
         service._conversations["s1"] = conv
         win._on_session_idle(service, "s1")
 
@@ -300,7 +294,11 @@ class TestWindowSearch:
         service = _make_mock_service()
         win = CopilotWindow(service=service)
 
-        for sid, title in [("s1", "Weather today"), ("s2", "Code review"), ("s3", "Weather forecast")]:
+        for sid, title in [
+            ("s1", "Weather today"),
+            ("s2", "Code review"),
+            ("s3", "Weather forecast"),
+        ]:
             conv = Conversation(session_id=sid, title=title)
             service._conversations[sid] = conv
             win._on_session_idle(service, sid)

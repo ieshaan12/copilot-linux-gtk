@@ -3,14 +3,12 @@
 
 from __future__ import annotations
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from gi.repository import Adw, GLib, Gtk  # noqa: E402
 

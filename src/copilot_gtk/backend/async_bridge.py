@@ -28,7 +28,7 @@ from typing import Any, TypeVar
 
 import gi
 
-gi.require_version('GLib', '2.0')
+gi.require_version("GLib", "2.0")
 from gi.repository import GLib  # noqa: E402
 
 log = logging.getLogger(__name__)
@@ -61,9 +61,7 @@ def get_loop() -> asyncio.AbstractEventLoop:
     Raises ``RuntimeError`` if :func:`install_async_bridge` has not been called.
     """
     if _loop is None:
-        raise RuntimeError(
-            "Async bridge not installed. Call install_async_bridge() first."
-        )
+        raise RuntimeError("Async bridge not installed. Call install_async_bridge() first.")
     return _loop
 
 
@@ -94,9 +92,11 @@ def run_async(
     def _on_done(t: asyncio.Task[T]) -> None:
         exc = t.exception()
         if exc is not None:
-            log.error("Async task failed: %s\n%s", exc, "".join(
-                traceback.format_exception(type(exc), exc, exc.__traceback__)
-            ))
+            log.error(
+                "Async task failed: %s\n%s",
+                exc,
+                "".join(traceback.format_exception(type(exc), exc, exc.__traceback__)),
+            )
             if error_callback is not None:
                 GLib.idle_add(error_callback, exc)
         else:
