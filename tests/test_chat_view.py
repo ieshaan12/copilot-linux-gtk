@@ -97,3 +97,32 @@ class TestChatView:
         assert _count_children(view) == 1
         child = view._message_box.get_first_child()
         assert child.content == "new"
+
+    def test_finish_streaming_empty_shows_error(self):
+        view = ChatView()
+        view.add_assistant_placeholder()
+        # finish without any content
+        view.finish_streaming()
+        child = view._message_box.get_first_child()
+        assert child.is_streaming is False
+        assert "⚠" in child.content
+        assert child.has_css_class("error-bubble")
+        assert view._streaming_bubble is None
+
+    def test_show_streaming_error_with_active_bubble(self):
+        view = ChatView()
+        view.add_assistant_placeholder()
+        view.show_streaming_error("Network timeout")
+        child = view._message_box.get_first_child()
+        assert "Network timeout" in child.content
+        assert child.has_css_class("error-bubble")
+        assert view._streaming_bubble is None
+
+    def test_show_streaming_error_creates_bubble_if_none(self):
+        view = ChatView()
+        # No streaming bubble exists
+        view.show_streaming_error("Unexpected error")
+        assert _count_children(view) == 1
+        child = view._message_box.get_first_child()
+        assert "Unexpected error" in child.content
+        assert child.has_css_class("error-bubble")

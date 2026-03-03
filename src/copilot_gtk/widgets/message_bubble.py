@@ -166,6 +166,23 @@ class MessageBubble(Gtk.Box):
         self._is_streaming = False
         self._spinner.set_visible(False)
 
+    def show_error(self, message: str) -> None:
+        """Display an inline error message in this bubble.
+
+        Replaces any streaming content with a styled error notice so
+        the user understands why the response is missing.
+        """
+        self._is_streaming = False
+        self._spinner.set_visible(False)
+
+        error_text = f"⚠ {message}"
+        if self._markdown_view is not None:
+            self._markdown_view.set_markdown(error_text)
+        elif self._text_label is not None:
+            self._text_label.set_label(error_text)
+
+        self.add_css_class("error-bubble")
+
     @property
     def is_streaming(self) -> bool:
         return self._is_streaming

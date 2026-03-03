@@ -55,3 +55,18 @@ class TestMessageBubble:
     def test_system_bubble_alignment(self):
         bubble = MessageBubble(role="system", content="System message")
         assert bubble.get_halign() == Gtk.Align.START
+
+    def test_show_error_replaces_content(self):
+        bubble = MessageBubble(role="assistant", content="", is_streaming=True)
+        bubble.show_error("Something went wrong")
+        assert bubble.is_streaming is False
+        assert "⚠" in bubble.content
+        assert "Something went wrong" in bubble.content
+        assert bubble.has_css_class("error-bubble")
+
+    def test_show_error_on_bubble_with_content(self):
+        bubble = MessageBubble(role="assistant", content="partial", is_streaming=True)
+        bubble.append_content(" data")
+        bubble.show_error("Connection lost")
+        assert "Connection lost" in bubble.content
+        assert bubble.is_streaming is False
