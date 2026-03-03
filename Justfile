@@ -13,9 +13,33 @@ run:
 test:
     uv run pytest tests/ -v --ignore=tests/ui
 
+# Run unit tests only (alias for 'test')
+test-unit:
+    uv run pytest tests/ -v --ignore=tests/ui
+
 # Run unit tests with coverage
 test-coverage:
     uv run pytest tests/ -v --ignore=tests/ui --cov=src/copilot_gtk --cov-report=term-missing
+
+# Run UI tests (requires display server; uses Xvfb if available)
+test-ui:
+    #!/usr/bin/env bash
+    set -e
+    export COPILOT_GTK_MOCK_BACKEND=1
+    export COPILOT_GTK_MOCK_DELAY=30
+    export GTK_A11Y=atspi
+    if command -v xvfb-run &> /dev/null; then
+        xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24" \
+            uv run pytest tests/ui/ -v --timeout=60
+    else
+        uv run pytest tests/ui/ -v --timeout=60
+    fi
+
+# Run all tests (unit + UI)
+test-all: test-unit test-ui
+
+# Run all checks + all tests (for CI)
+test-ci: lint typecheck test-unit test-ui
 
 # Run lint checks (ruff)
 lint:

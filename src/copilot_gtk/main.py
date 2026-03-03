@@ -2,6 +2,7 @@
 # Main entry point for Copilot for GNOME
 
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -12,9 +13,10 @@ gi.require_version('Adw', '1')
 
 from gi.repository import Adw, Gdk, Gio, Gtk  # noqa: E402
 
-from .backend import CopilotService, install_async_bridge  # noqa: E402
+from .backend import install_async_bridge  # noqa: E402
 from .backend.auth_manager import AuthManager  # noqa: E402
 from .backend.conversation_store import ConversationStore  # noqa: E402
+from .backend.mock_copilot_service import create_service  # noqa: E402
 from .window import CopilotWindow  # noqa: E402
 from .widgets.auth_dialog import AuthDialog  # noqa: E402
 from .widgets.preferences_dialog import PreferencesDialog  # noqa: E402
@@ -26,12 +28,19 @@ class CopilotGTKApplication(Adw.Application):
     """The main application class for Copilot for GNOME."""
 
     def __init__(self) -> None:
+        # In test mode, use a separate D-Bus name so the test instance doesn't
+        # conflict with a normally-running app, while still registering on the
+        # session bus (needed for gdbus GAction activation in UI tests).
+        app_id = 'io.github.ieshaan.CopilotGTK'
+        if os.environ.get("COPILOT_GTK_TEST_MODE") == "1":
+            app_id = 'io.github.ieshaan.CopilotGTK.Test'
+
         super().__init__(
-            application_id='io.github.ieshaan.CopilotGTK',
+            application_id=app_id,
             flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
         )
         self._auth_manager = AuthManager()
-        self._service = CopilotService()
+        self._service = create_service()
         self._store = ConversationStore()
         self._window: CopilotWindow | None = None
         self._settings: Gio.Settings | None = None

@@ -73,3 +73,6 @@ disallow_untyped_defs = true
 testpaths = ["tests"]
 asyncio_mode = "auto"
 timeout = 30
+markers = [
+    "ui: end-to-end UI tests requiring display server and AT-SPI (deselect with '-m not ui')",
+]
