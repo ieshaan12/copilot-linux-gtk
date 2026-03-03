@@ -1,0 +1,18 @@
+[
+  {
+    "trigger": "markdown",
+    "response": "# Sample Heading\n\nThis has **bold** and *italic* text.\n\n```python\nprint('hello')\n```\n"
+  },
+  {
+    "trigger": "list",
+    "response": "Here's a list:\n\n1. First item\n2. Second item\n3. Third item\n"
+  },
+  {
+    "trigger": "error",
+    "response": "I encountered an issue while processing your request."
+  },
+  {
+    "trigger": "long",
+    "response": "This is a very long response that is designed to test auto-scrolling behavior. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\nParagraph two continues with more content to ensure the chat view scrolls properly. This should be enough text to push the view past the visible area and trigger auto-scroll behavior.\n\nAnd a final paragraph for good measure."
+  }
+]
