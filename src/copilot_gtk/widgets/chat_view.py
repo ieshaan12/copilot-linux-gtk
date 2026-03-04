@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 import gi
@@ -16,6 +17,8 @@ if TYPE_CHECKING:
     from ..backend import Conversation
 
 from .message_bubble import MessageBubble  # noqa: E402
+
+log = logging.getLogger(__name__)
 
 
 class ChatView(Gtk.Box):
@@ -97,9 +100,16 @@ class ChatView(Gtk.Box):
     def append_streaming_delta(self, delta: str) -> None:
         """Append a streaming token to the current assistant bubble."""
         if self._streaming_bubble is not None:
+            log.debug(
+                "append_streaming_delta: delta_len=%d bubble_content_len=%d",
+                len(delta),
+                len(self._streaming_bubble.content),
+            )
             self._streaming_bubble.append_content(delta)
             if self._auto_scroll:
                 self._scroll_to_bottom()
+        else:
+            log.warning("append_streaming_delta called but no streaming bubble!")
 
     def finish_streaming(self) -> None:
         """Mark the streaming bubble as complete.
@@ -108,11 +118,18 @@ class ChatView(Gtk.Box):
         message is shown so the user isn't left staring at a blank box.
         """
         if self._streaming_bubble is not None:
+            log.info(
+                "finish_streaming: bubble content_len=%d content=%.100r",
+                len(self._streaming_bubble.content),
+                self._streaming_bubble.content,
+            )
             if not self._streaming_bubble.content.strip():
                 self._streaming_bubble.show_error("No response received. Please try again.")
             else:
                 self._streaming_bubble.finish_streaming()
             self._streaming_bubble = None
+        else:
+            log.debug("finish_streaming called but no streaming bubble (already finished)")
 
     def show_streaming_error(self, message: str) -> None:
         """Show an error message in the current streaming bubble.

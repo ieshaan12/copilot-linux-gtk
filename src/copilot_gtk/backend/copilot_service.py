@@ -343,6 +343,22 @@ class CopilotService(GObject.Object):
         etype = event.type
         data = event.data
 
+        # Log every event for diagnostics (delta content truncated)
+        if etype in (
+            SessionEventType.ASSISTANT_MESSAGE_DELTA,
+            SessionEventType.ASSISTANT_STREAMING_DELTA,
+            SessionEventType.ASSISTANT_REASONING_DELTA,
+        ):
+            delta = getattr(data, "delta_content", None) or ""
+            log.debug(
+                "Event %s for session %s (delta len=%d)",
+                etype.name,
+                session_id,
+                len(delta),
+            )
+        else:
+            log.info("Event %s for session %s", etype.name, session_id)
+
         if etype in (
             SessionEventType.ASSISTANT_MESSAGE_DELTA,
             SessionEventType.ASSISTANT_STREAMING_DELTA,
@@ -359,16 +375,45 @@ class CopilotService(GObject.Object):
 
         elif etype == SessionEventType.ASSISTANT_MESSAGE:
             content = getattr(data, "content", None) or ""
-            # Finalise the streaming message
+            # Only finalise when the message has visible content.
+            # Empty ASSISTANT_MESSAGE events are typically tool-call
+            # requests in multi-turn flows — the real answer arrives
+            # in a subsequent turn.
+            if content:
+                conv = self._conversations.get(session_id)
+                if conv is not None:
+                    streaming_msg = conv.get_streaming_message()
+                    if streaming_msg is not None:
+                        streaming_msg.content = content
+                        streaming_msg.finish_streaming()
+                GLib.idle_add(self.emit, "response-complete", session_id, content)
+            else:
+                log.debug(
+                    "Skipping empty ASSISTANT_MESSAGE for session %s (likely a tool-call turn)",
+                    session_id,
+                )
+
+        elif etype == SessionEventType.SESSION_IDLE:
+            # SESSION_IDLE is the definitive "all turns done" signal.
+            # Finalise any still-streaming message as a safety net
+            # (e.g. reasoning-only models that never emit ASSISTANT_MESSAGE).
             conv = self._conversations.get(session_id)
             if conv is not None:
                 streaming_msg = conv.get_streaming_message()
                 if streaming_msg is not None:
-                    streaming_msg.content = content
+                    log.warning(
+                        "Session %s went idle with un-finished streaming "
+                        "message (content len=%d) — finalising now",
+                        session_id,
+                        len(streaming_msg.content),
+                    )
                     streaming_msg.finish_streaming()
-            GLib.idle_add(self.emit, "response-complete", session_id, content)
-
-        elif etype == SessionEventType.SESSION_IDLE:
+                    GLib.idle_add(
+                        self.emit,
+                        "response-complete",
+                        session_id,
+                        streaming_msg.content,
+                    )
             GLib.idle_add(self.emit, "session-idle", session_id)
 
         elif etype == SessionEventType.SESSION_TITLE_CHANGED:
@@ -387,7 +432,18 @@ class CopilotService(GObject.Object):
             GLib.idle_add(self.emit, "turn-start", session_id)
 
         elif etype == SessionEventType.ASSISTANT_TURN_END:
+            # Do NOT finalise the streaming message here — a new turn
+            # may follow immediately (e.g. tool-call → answer turn).
+            # SESSION_IDLE is the true "all done" signal.
             GLib.idle_add(self.emit, "turn-end", session_id)
+
+        elif etype in (
+            SessionEventType.ASSISTANT_REASONING_DELTA,
+            SessionEventType.ASSISTANT_REASONING,
+            SessionEventType.ASSISTANT_USAGE,
+        ):
+            # Known informational events — already logged above.
+            pass
 
         else:
             log.debug("Unhandled event %s for session %s", etype, session_id)

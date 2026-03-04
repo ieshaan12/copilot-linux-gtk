@@ -298,12 +298,23 @@ class CopilotWindow(Adw.ApplicationWindow):
             self._content_stack.set_visible_child_name("empty")
 
     def _on_response_chunk(self, _service: CopilotService, session_id: str, delta: str) -> None:
+        log.debug(
+            "response-chunk received: session=%s current=%s delta_len=%d",
+            session_id,
+            self._current_session_id,
+            len(delta),
+        )
         if session_id == self._current_session_id:
             self._chat_view.append_streaming_delta(delta)
 
     def _on_response_complete(
         self, _service: CopilotService, session_id: str, content: str
     ) -> None:
+        log.info(
+            "response-complete received: session=%s content_len=%d",
+            session_id,
+            len(content),
+        )
         if session_id == self._current_session_id:
             self._chat_view.finish_streaming()
 
@@ -346,6 +357,9 @@ class CopilotWindow(Adw.ApplicationWindow):
                 self._store.save_conversation(conv)
 
         if session_id == self._current_session_id:
+            # SESSION_IDLE is the definitive "all turns done" signal.
+            # Finalise any remaining streaming bubble.
+            self._chat_view.finish_streaming()
             self._chat_input.set_loading(False)
 
     def _on_session_title_changed(
@@ -363,8 +377,10 @@ class CopilotWindow(Adw.ApplicationWindow):
             self._chat_input.set_loading(True)
 
     def _on_turn_end(self, _service: CopilotService, session_id: str) -> None:
-        if session_id == self._current_session_id:
-            self._chat_input.set_loading(False)
+        # Don't finalise the streaming bubble or stop loading here —
+        # a new turn may follow immediately (e.g. tool-call → answer).
+        # SESSION_IDLE is the definitive cleanup point.
+        pass
 
     def _on_service_error(self, _service: CopilotService, message: str) -> None:
         # Fatal errors: show a full-pane StatusPage
